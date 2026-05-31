@@ -1,4 +1,4 @@
-package com.mochi
+package com.mochi.data
 
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
