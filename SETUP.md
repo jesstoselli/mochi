@@ -67,6 +67,11 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
 
 - **Versions**: Kotlin 2.2.20, AGP 9.2, compileSdk 36 — bleeding edge. All versions are
   centralized in `gradle/libs.versions.toml`. If Gradle Sync suggests tweaks, align them there.
+- **Fonts**: bundled in `composeResources/font/` and applied via `MochiTheme` — Nunito for
+  UI/Latin text, Zen Maru Gothic for Japanese (exposed through `LocalJapaneseFont`, used by
+  the card). Both are OFL (open source). Zen Maru Gothic is a CJK font (~3.8 MB/weight), so it
+  was subset with `fonttools` to just the deck's glyphs (kanji used + full kana + ASCII),
+  bringing each weight down to ~440 KB.
 - **Code quality**: ktlint + detekt are wired into both modules. Run `./gradlew ktlintFormat`
   to auto-format, and `./gradlew ktlintCheck detekt` to verify.
 - **Audio**: the word pronunciation MP3s (~17 MB, 1500 clips) are extracted from the deck and

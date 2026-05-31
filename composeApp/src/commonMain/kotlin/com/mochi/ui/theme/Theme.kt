@@ -7,6 +7,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -62,10 +63,14 @@ fun MochiTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = MochiTypography,
-        shapes = MochiShapes,
-        content = content,
-    )
+    val uiFont = rememberUiFontFamily()
+    val japaneseFont = rememberJapaneseFontFamily()
+    CompositionLocalProvider(LocalJapaneseFont provides japaneseFont) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColors else LightColors,
+            typography = mochiTypography(uiFont),
+            shapes = MochiShapes,
+            content = content,
+        )
+    }
 }

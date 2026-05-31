@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mochi.ui.theme.JapaneseFontFamily
+import com.mochi.ui.theme.LocalJapaneseFont
 
 /**
  * Card that flips 180° on the Y axis to reveal the translation, and gives a soft
@@ -62,6 +62,7 @@ fun FlipCard(
         label = "squish",
     )
     val density = LocalDensity.current.density
+    val japaneseFont = LocalJapaneseFont.current
 
     Card(
         modifier = modifier
@@ -80,7 +81,7 @@ fun FlipCard(
             if (rotation <= 90f) {
                 Text(
                     text = front,
-                    fontFamily = JapaneseFontFamily,
+                    fontFamily = japaneseFont,
                     fontSize = 96.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -92,7 +93,7 @@ fun FlipCard(
                 ) {
                     Text(
                         text = reading,
-                        fontFamily = JapaneseFontFamily,
+                        fontFamily = japaneseFont,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary,
