@@ -24,7 +24,7 @@ fun rememberJapaneseFontFamily(): FontFamily = FontFamily(
 )
 
 /** Provides the Japanese font to composables that render kana/kanji (e.g. the card). */
-val LocalJapaneseFont = staticCompositionLocalOf { FontFamily.Default }
+val LocalJapaneseFont = staticCompositionLocalOf<FontFamily> { FontFamily.Default }
 
 /** Material typography with the UI font applied across every style. */
 fun mochiTypography(ui: FontFamily): Typography {
