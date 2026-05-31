@@ -10,6 +10,8 @@ data class StatsUiState(
     val streak: Int = 0,
     val reviewsToday: Long = 0,
     val totalLearned: Long = 0,
+    // Reviews per day for the last 7 days, oldest first (… , yesterday, today).
+    val last7Days: List<Long> = emptyList(),
 )
 
 /** Computes the essential stats (streak, today's reviews, words learned) from the log. */
@@ -29,6 +31,7 @@ class StatsViewModel(private val statsStore: StatsStore) : ViewModel() {
             streak = streakLength(statsStore.distinctDaysDesc(), today),
             reviewsToday = statsStore.reviewsOnDay(today),
             totalLearned = statsStore.totalStarted(),
+            last7Days = (6L downTo 0L).map { statsStore.reviewsOnDay(today - it) },
         )
     }
 
