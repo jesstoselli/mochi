@@ -66,6 +66,11 @@ fun FlashcardScreen(
         }
     }
 
+    // Auto-play the pronunciation each time a new card appears.
+    LaunchedEffect(card.id) {
+        onPlayAudio()
+    }
+
     Box(modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
