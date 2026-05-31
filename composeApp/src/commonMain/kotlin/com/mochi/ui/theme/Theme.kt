@@ -63,12 +63,11 @@ fun MochiTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val uiFont = rememberUiFontFamily()
-    val japaneseFont = rememberJapaneseFontFamily()
-    CompositionLocalProvider(LocalJapaneseFont provides japaneseFont) {
+    val fonts = rememberMochiFonts()
+    CompositionLocalProvider(LocalJapaneseFont provides fonts.japanese) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
-            typography = mochiTypography(uiFont),
+            typography = mochiTypography(fonts.ui),
             shapes = MochiShapes,
             content = content,
         )
