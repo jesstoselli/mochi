@@ -1,0 +1,14 @@
+# detekt configuration. Builds upon the default rules (buildUponDefaultConfig = true),
+# overriding only what's noisy for a Compose UI project.
+
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    # Animation/layout constants (durations, dp, spring params) are expected here.
+    active: false
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Composable', 'Preview']

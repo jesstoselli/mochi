@@ -1,7 +1,8 @@
 package com.mochi.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.mochi.resources.Res
 import io.github.alexzhirkevich.compottie.Compottie
@@ -21,7 +22,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 fun SuccessAnimation(modifier: Modifier = Modifier, loop: Boolean = false) {
     val composition by rememberLottieComposition {
         LottieCompositionSpec.JsonString(
-            Res.readBytes("files/celebration.json").decodeToString()
+            Res.readBytes("files/celebration.json").decodeToString(),
         )
     }
     val progress by animateLottieCompositionAsState(

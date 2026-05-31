@@ -7,6 +7,10 @@ compottie = "2.0.0-rc04"          # confira a última em github.com/alexzhirkevi
 kotlinxSerialization = "1.9.0"
 coroutines = "1.10.2"
 
+# Code quality
+ktlint = "14.2.0"                 # github.com/JLLeitschuh/ktlint-gradle
+detekt = "2.0.0-alpha.2"          # 2.x is the line built for Kotlin 2.x (plugin id: dev.detekt)
+
 # Android-only (usadas em androidMain)
 androidxActivityCompose = "1.13.0"
 androidxCoreKtx = "1.18.0"
@@ -38,3 +42,5 @@ compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMu
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
