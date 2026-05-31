@@ -1,8 +1,12 @@
 package com.mochi.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -103,12 +106,19 @@ fun FlashcardScreen(
                 CategoryPill(card.category)
                 Spacer(Modifier.height(20.dp))
 
-                // key(card.id) recreates the FlipCard per card, resetting it to the front.
-                key(card.id) {
+                // Slide the next card in from the right; resets the flip per card.
+                AnimatedContent(
+                    targetState = card,
+                    transitionSpec = {
+                        (slideInHorizontally { width -> width } + fadeIn()) togetherWith
+                            (slideOutHorizontally { width -> -width } + fadeOut())
+                    },
+                    label = "card",
+                ) { current ->
                     FlipCard(
-                        front = card.front,
-                        reading = card.reading,
-                        meaning = card.back,
+                        front = current.front,
+                        reading = current.reading,
+                        meaning = current.back,
                     )
                 }
 
