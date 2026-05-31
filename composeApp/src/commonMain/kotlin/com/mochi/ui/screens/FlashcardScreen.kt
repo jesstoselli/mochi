@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,8 +69,12 @@ fun FlashcardScreen(
 
     Box(modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 LinearProgressIndicator(
@@ -86,38 +91,34 @@ fun FlashcardScreen(
                 )
             }
 
-            Column(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                CategoryPill(card.category)
+            Spacer(Modifier.height(24.dp))
+            CategoryPill(card.category)
+            Spacer(Modifier.height(20.dp))
+
+            // key(card.id) recreates the FlipCard per card, resetting it to the front.
+            key(card.id) {
+                FlipCard(
+                    front = card.front,
+                    reading = card.reading,
+                    meaning = card.back,
+                )
+            }
+
+            val audio = card.audio
+            if (!audio.isNullOrBlank()) {
                 Spacer(Modifier.height(20.dp))
-
-                // key(card.id) recreates the FlipCard per card, resetting it to the front.
-                key(card.id) {
-                    FlipCard(
-                        front = card.front,
-                        reading = card.reading,
-                        meaning = card.back,
-                    )
-                }
-
-                val audio = card.audio
-                if (!audio.isNullOrBlank()) {
-                    Spacer(Modifier.height(20.dp))
-                    BouncyButton(
-                        onClick = onPlayAudio,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                    ) {
-                        Text("🔊  Listen")
-                    }
+                BouncyButton(
+                    onClick = onPlayAudio,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                ) {
+                    Text("🔊  Listen")
                 }
             }
 
+            Spacer(Modifier.height(28.dp))
             AnswerButtons(
                 onAnswer = { correct ->
                     if (correct) celebrationTick++
