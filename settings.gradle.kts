@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Mochi"
 include(":composeApp")
+include(":androidApp")

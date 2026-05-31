@@ -4,15 +4,26 @@ A Duolingo-inspired flashcard app built around the **Kaishi 1.5k** deck (1500 wo
 focused on practicing **native animations** (flip + spring) and **Lottie** in
 Compose Multiplatform (Android + iOS).
 
-## Structure
+## Architecture
+
+The project follows the module layout recommended for **AGP 9+**, where the Kotlin
+Multiplatform plugin is no longer compatible with `com.android.application` in the same
+module. So the code is split in two:
+
+- **`composeApp/`** — the shared Kotlin Multiplatform **library** (`com.android.kotlin.multiplatform.library`).
+  Holds all cross-platform code: UI, data layer, SQLDelight schema, resources, and the
+  `expect`/`actual` declarations. Produces the `ComposeApp` framework consumed by iOS.
+- **`androidApp/`** — a pure Android **application** (`com.android.application`) that depends on
+  `composeApp` and only contains the Android entry point (`MainActivity`), manifest and resources.
+- **`iosApp/`** — the SwiftUI app that hosts the same Compose UI on iOS.
 
 ```
 Mochi/
-├─ settings.gradle.kts            include(":composeApp")
+├─ settings.gradle.kts            include(":composeApp", ":androidApp")
 ├─ build.gradle.kts               project plugins (apply false)
 ├─ gradle/libs.versions.toml      centralized versions
-├─ composeApp/                    Compose Multiplatform module
-│  ├─ build.gradle.kts            android + iOS targets, SQLDelight, Compottie
+├─ composeApp/                    shared KMP library (Android-KMP library plugin + iOS)
+│  ├─ build.gradle.kts
 │  └─ src/
 │     ├─ commonMain/
 │     │  ├─ kotlin/com/mochi/
@@ -21,8 +32,10 @@ Mochi/
 │     │  │  └─ data/              DriverFactory (expect), DeckRepository, Seed
 │     │  ├─ sqldelight/com/mochi/db/Flashcard.sq   schema + queries
 │     │  └─ composeResources/files/deck.json       1500 cards (generated from the .apkg)
-│     ├─ androidMain/             MainActivity, DriverFactory (Android), res/, manifest
-│     └─ iosMain/                 DriverFactory (iOS), MainViewController
+│     ├─ androidMain/             DriverFactory (Android actual)
+│     └─ iosMain/                 DriverFactory (iOS actual), MainViewController
+├─ androidApp/                    pure Android application
+│  └─ src/main/                   MainActivity, AndroidManifest, res/
 └─ iosApp/                        SwiftUI app that hosts Compose (see the iOS note below)
 ```
 
@@ -30,7 +43,7 @@ Mochi/
 
 1. Open the `Mochi` folder in Android Studio.
 2. Run **Gradle Sync** (the IDE downloads dependencies).
-3. Run the `composeApp` configuration on an emulator/device.
+3. Run the **`androidApp`** configuration on an emulator/device.
 
 On first launch the app seeds itself: it reads `deck.json` and populates SQLite
 (`flashcards.db`). The screen shows one card at a time — tap to flip it, and use
@@ -38,24 +51,24 @@ On first launch the app seeds itself: it reads `deck.json` and populates SQLite
 
 ## Run on iOS
 
-The Kotlin iOS sources (`iosMain`) and the Swift sources (`iosApp/iosApp/`) are ready.
-Only the **Xcode wrapper** (`iosApp.xcodeproj`) is missing, and it's safer to generate it
-with tooling than by hand. Two options:
+The Kotlin iOS sources (`composeApp/src/iosMain`) and the Swift sources (`iosApp/iosApp/`)
+are ready. Only the **Xcode wrapper** (`iosApp.xcodeproj`) is missing, and it's safer to
+generate it with tooling than by hand. Two options:
 
 - Use the **Kotlin Multiplatform** plugin in Android Studio (Tools → KMP) to generate/open
   the `iosApp`; or
 - Recreate the iOS skeleton with the **Kotlin Multiplatform Wizard** (kmp.jetbrains.com) and
-  point it at this module's `ComposeApp` framework.
+  point it at the `composeApp` `ComposeApp` framework.
 
 The Swift code already calls `MainViewControllerKt.MainViewController()`, so once the
 `.xcodeproj` is linked to the framework, iOS runs the same Compose UI as Android.
 
 ## Technical notes
 
-- **Versions**: Kotlin bumped to 2.2.20 (recommended for native/iOS targets). Compose
-  Multiplatform, SQLDelight and Compottie are centralized in `gradle/libs.versions.toml`.
-  We're on the bleeding edge (AGP 9.2, compileSdk 36); if Gradle Sync suggests version
-  tweaks, align them there.
+- **Versions**: Kotlin 2.2.20, AGP 9.2, compileSdk 36 — bleeding edge. All versions are
+  centralized in `gradle/libs.versions.toml`. If Gradle Sync suggests tweaks, align them there.
+- **Code quality**: ktlint + detekt are wired into both modules. Run `./gradlew ktlintFormat`
+  to auto-format, and `./gradlew ktlintCheck detekt` to verify.
 - **Audio**: `deck.json` carries each card's audio file name, but the MP3s live inside the
   `.apkg`. Playing audio is a future enhancement (extract and bundle the media).
 - **Lottie**: `SuccessAnimation.kt` is ready but needs a `celebration.json`

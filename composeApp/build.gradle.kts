@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
@@ -12,9 +12,17 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
+    // Android target via the new Android-KMP library plugin (AGP 9+).
+    android {
+        namespace = "com.mochi.shared"
+        compileSdk = 36
+        minSdk = 26
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+        }
+        androidResources {
+            enable = true
         }
     }
 
@@ -40,10 +48,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.core.ktx)
-            implementation(libs.androidx.lifecycle.runtime.ktx)
             implementation(libs.sqldelight.android.driver)
         }
         iosMain.dependencies {
@@ -52,34 +56,6 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.mochi"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
-
-    defaultConfig {
-        applicationId = "com.mochi"
-        minSdk = 26
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
-// Onde a classe Res (acesso a composeResources/) é gerada.
 compose.resources {
     publicResClass = true
     packageOfResClass = "com.mochi.resources"
@@ -94,7 +70,6 @@ sqldelight {
 }
 
 // ----- Code quality -----
-
 ktlint {
     android.set(true)
     ignoreFailures.set(false)
