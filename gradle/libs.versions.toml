@@ -1,0 +1,40 @@
+[versions]
+agp = "9.2.1"
+kotlin = "2.2.20"                 # subido de 2.2.10: recomendado para targets nativos/iOS
+composeMultiplatform = "1.10.3"
+sqldelight = "2.2.1"
+compottie = "2.0.0-rc04"          # confira a última em github.com/alexzhirkevich/compottie/releases
+kotlinxSerialization = "1.9.0"
+coroutines = "1.10.2"
+
+# Android-only (usadas em androidMain)
+androidxActivityCompose = "1.13.0"
+androidxCoreKtx = "1.18.0"
+androidxLifecycle = "2.10.0"
+
+[libraries]
+# SQLDelight
+sqldelight-runtime = { group = "app.cash.sqldelight", name = "runtime", version.ref = "sqldelight" }
+sqldelight-coroutines = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
+sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
+sqldelight-native-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
+
+# Lottie (Compose Multiplatform)
+compottie = { group = "io.github.alexzhirkevich", name = "compottie", version.ref = "compottie" }
+
+# Serialização e coroutines
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+
+# Android
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCoreKtx" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
