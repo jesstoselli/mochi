@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.mochi.resources.Res
@@ -29,13 +28,13 @@ fun rememberMochiFonts(): MochiFonts {
     val fonts by produceState(MochiFonts(FontFamily.Default, FontFamily.Default)) {
         value = MochiFonts(
             ui = FontFamily(
-                Font("nunito_regular", Res.readBytes("files/fonts/nunito_regular.ttf"), FontWeight.Normal),
-                Font("nunito_medium", Res.readBytes("files/fonts/nunito_medium.ttf"), FontWeight.Medium),
-                Font("nunito_bold", Res.readBytes("files/fonts/nunito_bold.ttf"), FontWeight.Bold),
+                loadFont("nunito_regular", Res.readBytes("files/fonts/nunito_regular.ttf"), FontWeight.Normal),
+                loadFont("nunito_medium", Res.readBytes("files/fonts/nunito_medium.ttf"), FontWeight.Medium),
+                loadFont("nunito_bold", Res.readBytes("files/fonts/nunito_bold.ttf"), FontWeight.Bold),
             ),
             japanese = FontFamily(
-                Font("zmg_regular", Res.readBytes("files/fonts/zen_maru_gothic_regular.ttf"), FontWeight.Normal),
-                Font("zmg_medium", Res.readBytes("files/fonts/zen_maru_gothic_medium.ttf"), FontWeight.Medium),
+                loadFont("zmg_regular", Res.readBytes("files/fonts/zen_maru_gothic_regular.ttf"), FontWeight.Normal),
+                loadFont("zmg_medium", Res.readBytes("files/fonts/zen_maru_gothic_medium.ttf"), FontWeight.Medium),
             ),
         )
     }
