@@ -14,6 +14,7 @@ import com.mochi.data.createDatabase
 import com.mochi.data.seedIfNeeded
 import com.mochi.db.Flashcard
 import com.mochi.ui.FlashcardScreen
+import com.mochi.util.nowMillis
 
 /**
  * Shared entry point. Receives the platform DriverFactory (Android/iOS),
@@ -36,7 +37,10 @@ fun App(driverFactory: DriverFactory) {
     MaterialTheme {
         Surface {
             if (!loading) {
-                FlashcardScreen(deck = deck)
+                FlashcardScreen(
+                    deck = deck,
+                    onAnswer = { card, correct -> repo.recordAnswer(card, correct, nowMillis()) },
+                )
             }
         }
     }
