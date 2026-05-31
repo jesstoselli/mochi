@@ -71,8 +71,12 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
   to auto-format, and `./gradlew ktlintCheck detekt` to verify.
 - **Audio**: `deck.json` carries each card's audio file name, but the MP3s live inside the
   `.apkg`. Playing audio is a future enhancement (extract and bundle the media).
-- **Lottie**: `SuccessAnimation.kt` is ready but needs a `celebration.json`
-  (from lottiefiles.com) in `composeResources/files/`. It isn't wired into the first screen yet.
+- **Celebration**: `SuccessAnimation.kt` is a pure Compose Canvas animation (a green
+  circle pops in with a spring bounce, a halo ring expands and fades, and a checkmark is
+  stroked on). Drawn on the GPU, so it renders identically on Android and iOS — no external
+  renderer or asset needed. (We started with Lottie/Compottie but dropped it: the polished
+  LottieFiles exports relied on expressions, text layers and nested precomps that the
+  pure-Kotlin renderer doesn't support.)
 - **SRS**: `DeckRepository.recordAnswer` has a spaced-repetition skeleton (SM-2) to grow the
   app from a plain flashcard app into a smart-review one.
 

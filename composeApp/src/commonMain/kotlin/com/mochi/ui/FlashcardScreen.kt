@@ -26,13 +26,13 @@ import androidx.compose.ui.unit.dp
 import com.mochi.db.Flashcard
 import kotlinx.coroutines.delay
 
-// How long the celebration overlay stays up. The Lottie itself is ~5s; we show a
-// snappy slice of it so the flow between cards stays quick. Tune to taste.
-private const val CELEBRATION_MILLIS = 2000L
+// How long the celebration overlay stays up. The Canvas animation takes ~1s; the
+// extra time holds the finished checkmark briefly before fading out. Tune to taste.
+private const val CELEBRATION_MILLIS = 1400L
 
 /**
  * Main screen: shows one card at a time, lets the user self-rate, and celebrates
- * correct answers with a Lottie burst. Stays presentation-only — answers are
+ * correct answers with a Canvas burst. Stays presentation-only — answers are
  * reported via [onAnswer] so the data layer is wired in [com.mochi.App].
  */
 @Composable
@@ -91,7 +91,7 @@ fun FlashcardScreen(
             )
         }
 
-        // Celebration overlay — re-enters composition each time, so the Lottie replays.
+        // Celebration overlay — re-enters composition each time, so the animation replays.
         AnimatedVisibility(
             visible = celebrating,
             enter = fadeIn(),

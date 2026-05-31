@@ -3,9 +3,9 @@ agp = "9.2.1"
 kotlin = "2.2.20"                 # subido de 2.2.10: recomendado para targets nativos/iOS
 composeMultiplatform = "1.10.3"
 sqldelight = "2.2.1"
-compottie = "2.0.0-rc04"          # confira a última em github.com/alexzhirkevich/compottie/releases
 kotlinxSerialization = "1.9.0"
 coroutines = "1.10.2"
+# (compottie/Lottie removed: the celebration is now a pure Compose Canvas animation)
 
 # Code quality
 ktlint = "14.2.0"                 # github.com/JLLeitschuh/ktlint-gradle
@@ -22,9 +22,6 @@ sqldelight-runtime = { group = "app.cash.sqldelight", name = "runtime", version.
 sqldelight-coroutines = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
 sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
 sqldelight-native-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
-
-# Lottie (Compose Multiplatform)
-compottie = { group = "io.github.alexzhirkevich", name = "compottie", version.ref = "compottie" }
 
 # Serialização e coroutines
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
