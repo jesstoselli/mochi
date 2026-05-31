@@ -69,8 +69,11 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
   centralized in `gradle/libs.versions.toml`. If Gradle Sync suggests tweaks, align them there.
 - **Code quality**: ktlint + detekt are wired into both modules. Run `./gradlew ktlintFormat`
   to auto-format, and `./gradlew ktlintCheck detekt` to verify.
-- **Audio**: `deck.json` carries each card's audio file name, but the MP3s live inside the
-  `.apkg`. Playing audio is a future enhancement (extract and bundle the media).
+- **Audio**: the word pronunciation MP3s (~17 MB, 1500 clips) are extracted from the deck and
+  bundled in `composeResources/files/audio/` under clean hashed names; `deck.json` points each
+  card at its file. Playback uses a cross-platform `AudioPlayer` (`expect`/`actual`): Android
+  `MediaPlayer` with an in-memory data source, iOS `AVAudioPlayer`. Sentence audio (another
+  ~55 MB) is intentionally left out for now to keep the app slim.
 - **Celebration**: `SuccessAnimation.kt` is a pure Compose Canvas animation (a green
   circle pops in with a spring bounce, a halo ring expands and fades, and a checkmark is
   stroked on). Drawn on the GPU, so it renders identically on Android and iOS — no external

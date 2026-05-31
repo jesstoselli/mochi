@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,14 +32,15 @@ import kotlinx.coroutines.delay
 private const val CELEBRATION_MILLIS = 1400L
 
 /**
- * Main screen: shows one card at a time, lets the user self-rate, and celebrates
- * correct answers with a Canvas burst. Stays presentation-only — answers are
- * reported via [onAnswer] so the data layer is wired in [com.mochi.App].
+ * Main screen: shows one card at a time, plays its pronunciation, lets the user
+ * self-rate, and celebrates correct answers with a Canvas burst. Stays
+ * presentation-only — answers/audio are reported via callbacks wired in [com.mochi.App].
  */
 @Composable
 fun FlashcardScreen(
     deck: List<Flashcard>,
     onAnswer: (Flashcard, Boolean) -> Unit,
+    onPlayAudio: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (deck.isEmpty()) {
@@ -80,7 +82,23 @@ fun FlashcardScreen(
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(20.dp))
+
+            val audio = currentCard.audio
+            if (!audio.isNullOrBlank()) {
+                BouncyButton(
+                    onClick = { onPlayAudio(audio) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    ),
+                ) {
+                    Text("🔊  Listen")
+                }
+                Spacer(Modifier.height(20.dp))
+            } else {
+                Spacer(Modifier.height(12.dp))
+            }
 
             AnswerButtons(
                 onAnswer = { correct ->
