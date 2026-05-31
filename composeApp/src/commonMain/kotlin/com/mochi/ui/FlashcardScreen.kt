@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.dp
 import com.mochi.db.Flashcard
 import kotlinx.coroutines.delay
 
-private const val CELEBRATION_MILLIS = 1200L
+// How long the celebration overlay stays up. The Lottie itself is ~5s; we show a
+// snappy slice of it so the flow between cards stays quick. Tune to taste.
+private const val CELEBRATION_MILLIS = 2000L
 
 /**
  * Main screen: shows one card at a time, lets the user self-rate, and celebrates
