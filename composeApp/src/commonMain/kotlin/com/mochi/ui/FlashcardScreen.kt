@@ -31,36 +31,43 @@ import kotlinx.coroutines.delay
 // extra time holds the finished checkmark briefly before fading out. Tune to taste.
 private const val CELEBRATION_MILLIS = 1400L
 
+// Small pause after the last card so its celebration is visible before the summary.
+private const val SESSION_END_DELAY = 700L
+
 /**
- * Main screen: shows one card at a time, plays its pronunciation, lets the user
- * self-rate, and celebrates correct answers with a Canvas burst. Stays
- * presentation-only — answers/audio are reported via callbacks wired in [com.mochi.App].
+ * Runs a single finite review session over [deck]. Shows one card at a time, plays
+ * its pronunciation, lets the user self-rate, and celebrates correct answers. When the
+ * last card is answered it calls [onSessionComplete]. Presentation-only — answers and
+ * audio are reported via callbacks wired in [com.mochi.App].
  */
 @Composable
 fun FlashcardScreen(
     deck: List<Flashcard>,
     onAnswer: (Flashcard, Boolean) -> Unit,
     onPlayAudio: (String) -> Unit,
+    onSessionComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (deck.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No cards available.")
-        }
-        return
-    }
+    // Keyed on `deck` so a new session resets the position and flags.
+    var index by remember(deck) { mutableStateOf(0) }
+    var celebrationTick by remember(deck) { mutableStateOf(0) }
+    var celebrating by remember(deck) { mutableStateOf(false) }
+    var finishing by remember(deck) { mutableStateOf(false) }
 
-    var index by remember { mutableStateOf(0) }
-    var celebrationTick by remember { mutableStateOf(0) }
-    var celebrating by remember { mutableStateOf(false) }
+    if (deck.isEmpty()) return
     val currentCard = deck[index]
 
-    // Restart the celebration whenever a correct answer bumps the tick.
     LaunchedEffect(celebrationTick) {
         if (celebrationTick > 0) {
             celebrating = true
             delay(CELEBRATION_MILLIS)
             celebrating = false
+        }
+    }
+    LaunchedEffect(finishing) {
+        if (finishing) {
+            delay(SESSION_END_DELAY)
+            onSessionComplete()
         }
     }
 
@@ -104,7 +111,7 @@ fun FlashcardScreen(
                 onAnswer = { correct ->
                     onAnswer(currentCard, correct)
                     if (correct) celebrationTick++
-                    index = (index + 1) % deck.size
+                    if (index < deck.lastIndex) index++ else finishing = true
                 },
             )
         }

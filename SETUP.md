@@ -80,8 +80,11 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
   renderer or asset needed. (We started with Lottie/Compottie but dropped it: the polished
   LottieFiles exports relied on expressions, text layers and nested precomps that the
   pure-Kotlin renderer doesn't support.)
-- **SRS**: `DeckRepository.recordAnswer` has a spaced-repetition skeleton (SM-2) to grow the
-  app from a plain flashcard app into a smart-review one.
+- **SRS loop**: `App` drives spaced repetition — it loads due cards (`selectDueForReview`)
+  in capped sessions of `SESSION_SIZE` (20), reviews them in `FlashcardScreen`, then shows
+  `SessionCompleteScreen` with the recap. `DeckRepository.recordAnswer` updates each card's
+  schedule (simplified SM-2: interval/ease/next-review). When nothing is due, `CaughtUpScreen`
+  is shown.
 
 ## Regenerate the deck from another .apkg
 
