@@ -6,25 +6,26 @@ import com.mochi.audio.AudioPlayer
 import com.mochi.data.DeckRepository
 import com.mochi.db.Flashcard
 import com.mochi.resources.Res
+import com.mochi.settings.SettingsStore
+import com.mochi.stats.StatsStore
 import com.mochi.ui.SessionStats
 import com.mochi.util.nowMillis
+import com.mochi.util.todayEpochDay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
-// Cards per session — keeps the first run sane (otherwise all 1500 new cards are "due").
-private const val SESSION_SIZE = 20
-
 /**
- * Owns the whole review flow as a state machine: seed -> load due cards -> review a
- * capped session -> summary -> continue / caught up. The screens are presentation-only
- * and just render [state] and call these actions.
+ * Owns the review flow as a state machine. Each "session" is the Anki-style day queue:
+ * all due reviews plus new cards up to the remaining daily limit.
  */
 @OptIn(ExperimentalResourceApi::class)
 class ReviewViewModel(
     private val repo: DeckRepository,
+    private val statsStore: StatsStore,
+    private val settingsStore: SettingsStore,
     private val audioPlayer: AudioPlayer,
 ) : ViewModel() {
 
@@ -43,14 +44,24 @@ class ReviewViewModel(
         }
     }
 
-    /** Loads the next batch of due cards, or shows the "caught up" state if none. */
+    /** Builds the day's queue: due reviews + new cards capped by the daily limit. */
     fun startSession() {
-        val due = repo.dueForReview(nowMillis())
-        if (due.isEmpty()) {
+        val today = todayEpochDay()
+        val limit = settingsStore.newCardLimit()
+        val remainingNew = if (limit <= 0) {
+            Long.MAX_VALUE
+        } else {
+            (limit - statsStore.newOnDay(today)).coerceAtLeast(0)
+        }
+
+        val reviews = repo.dueReviews(nowMillis())
+        val newCards = if (remainingNew > 0) repo.newCards(remainingNew) else emptyList()
+        session = reviews + newCards
+
+        if (session.isEmpty()) {
             _state.value = ReviewUiState.CaughtUp
             return
         }
-        session = due.take(SESSION_SIZE)
         index = 0
         reviewed = 0
         correct = 0
@@ -59,7 +70,7 @@ class ReviewViewModel(
 
     fun answer(isCorrect: Boolean) {
         val card = session.getOrNull(index) ?: return
-        repo.recordAnswer(card, isCorrect, nowMillis())
+        repo.recordAnswer(card, isCorrect)
         reviewed++
         if (isCorrect) correct++
         if (index < session.lastIndex) {

@@ -14,7 +14,19 @@ class SettingsStore(private val db: AppDatabase) {
         db.settingsQueries.upsertSetting(KEY_THEME, mode.name)
     }
 
+    /** New cards introduced per day. 0 means unlimited. */
+    fun newCardLimit(): Int {
+        val stored = db.settingsQueries.selectSetting(KEY_NEW_LIMIT).executeAsOneOrNull()
+        return stored?.toIntOrNull() ?: DEFAULT_NEW_LIMIT
+    }
+
+    fun setNewCardLimit(limit: Int) {
+        db.settingsQueries.upsertSetting(KEY_NEW_LIMIT, limit.toString())
+    }
+
     private companion object {
         const val KEY_THEME = "theme_mode"
+        const val KEY_NEW_LIMIT = "new_card_limit"
+        const val DEFAULT_NEW_LIMIT = 20
     }
 }

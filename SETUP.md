@@ -93,12 +93,18 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
   `App` is a thin host that observes the state and routes to a screen; the screens are
   presentation-only (data in, callbacks out). There's one ViewModel for the review flow —
   the other screens are stateless, so they don't need their own.
-- **Settings / theme**: a gear icon opens `SettingsScreen` (animated slide via `AnimatedContent`).
-  `SettingsViewModel` holds the theme preference (System/Light/Dark), persisted in the
-  `app_setting` key/value table via `SettingsStore`; `App` applies it to `MochiTheme`.
-- **SRS loop**: due cards (`selectDueForReview`) are loaded in capped sessions of
-  `SESSION_SIZE` (20); `DeckRepository.recordAnswer` updates each card's schedule (simplified
-  SM-2: interval/ease/next-review). When nothing is due, `CaughtUpScreen` is shown.
+- **Navigation**: a bottom `NavigationBar` with three tabs — Review, Stats, Settings — hosted
+  by `App` (crossfade between tabs). Each tab is a presentation-only screen.
+- **Settings**: `SettingsViewModel` holds the theme preference (System/Light/Dark) and the
+  daily new-card limit (10/20/30/Unlimited), persisted in the `app_setting` key/value table via
+  `SettingsStore`; `App` applies the theme to `MochiTheme`.
+- **SRS loop (Anki-style)**: each session is the day's queue — all due reviews
+  (`selectDueReviews`) plus new cards (`selectNewCards`) up to the remaining daily limit.
+  `DeckRepository.recordAnswer` updates the card's schedule (simplified SM-2) and writes a row
+  to the `review_log` table. When the queue is empty, `CaughtUpScreen` is shown.
+- **Stats**: `StatsViewModel` derives streak (consecutive days with a review), reviews today,
+  and words learned from `review_log` (via `StatsStore`). The daily new-card limit also reads
+  today's new count from this log. `todayEpochDay()` (expect/actual) gives the local day index.
 
 ## Regenerate the deck from another .apkg
 

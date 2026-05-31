@@ -1,0 +1,26 @@
+-- One row per answered card (like Anki's revlog). Powers streak, daily stats and
+-- the new-cards-per-day limit. `day` is the local epoch-day; `was_new`/`correct` are 0/1.
+
+CREATE TABLE review_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_id     INTEGER NOT NULL,
+    reviewed_at INTEGER NOT NULL,
+    day         INTEGER NOT NULL,
+    was_new     INTEGER NOT NULL,
+    correct     INTEGER NOT NULL
+);
+
+CREATE INDEX review_log_day ON review_log(day);
+
+insertLog:
+INSERT INTO review_log(card_id, reviewed_at, day, was_new, correct)
+VALUES (?, ?, ?, ?, ?);
+
+countOnDay:
+SELECT COUNT(*) FROM review_log WHERE day = :day;
+
+countNewOnDay:
+SELECT COUNT(*) FROM review_log WHERE day = :day AND was_new = 1;
+
+distinctDaysDesc:
+SELECT DISTINCT day FROM review_log ORDER BY day DESC;
