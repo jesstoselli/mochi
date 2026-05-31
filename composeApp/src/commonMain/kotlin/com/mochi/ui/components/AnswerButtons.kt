@@ -1,4 +1,4 @@
-package com.mochi.ui
+package com.mochi.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -9,10 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/**
- * The two self-rating buttons shown under a card.
- * `onAnswer(true)` = the user knew it; `onAnswer(false)` = still learning.
- */
 @Composable
 fun AnswerButtons(
     onAnswer: (Boolean) -> Unit,

@@ -22,10 +22,11 @@ import com.mochi.data.createDatabase
 import com.mochi.data.seedIfNeeded
 import com.mochi.db.Flashcard
 import com.mochi.resources.Res
-import com.mochi.ui.CaughtUpScreen
-import com.mochi.ui.FlashcardScreen
-import com.mochi.ui.SessionCompleteScreen
+import com.mochi.ui.screens.CaughtUpScreen
+import com.mochi.ui.screens.FlashcardScreen
+import com.mochi.ui.screens.SessionCompleteScreen
 import com.mochi.ui.SessionStats
+import com.mochi.ui.theme.MochiTheme
 import com.mochi.util.nowMillis
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -74,8 +75,8 @@ fun App(driverFactory: DriverFactory) {
         onDispose { audioPlayer.release() }
     }
 
-    MaterialTheme {
-        Surface {
+    MochiTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
             when (phase) {
                 Phase.LOADING -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()

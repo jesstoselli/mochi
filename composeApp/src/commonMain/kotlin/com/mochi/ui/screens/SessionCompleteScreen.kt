@@ -1,4 +1,4 @@
-package com.mochi.ui
+package com.mochi.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.mochi.ui.SessionStats
+import com.mochi.ui.components.BouncyButton
+import com.mochi.ui.components.SuccessAnimation
 
 /** Shown when a review session finishes: a quick recap plus what to do next. */
 @Composable

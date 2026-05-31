@@ -1,4 +1,4 @@
-package com.mochi.ui
+package com.mochi.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.mochi.ui.components.BouncyButton
 
 /** Shown when there are no cards due for review right now. */
 @Composable

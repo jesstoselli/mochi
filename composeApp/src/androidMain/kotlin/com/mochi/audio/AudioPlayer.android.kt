@@ -31,7 +31,9 @@ actual class AudioPlayer {
 }
 
 /** Feeds an in-memory byte array to MediaPlayer without writing a temp file. */
-private class ByteArrayMediaDataSource(private val data: ByteArray) : MediaDataSource() {
+private class ByteArrayMediaDataSource(
+    private val data: ByteArray
+) : MediaDataSource() {
     override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int {
         if (position >= data.size) return -1
         val end = minOf(data.size.toLong(), position + size)

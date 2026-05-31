@@ -1,4 +1,4 @@
-package com.mochi.ui
+package com.mochi.ui.components
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -15,10 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 
-/**
- * A Button that bounces (spring) while pressed — Duolingo style.
- * Reused by every action button so the springy feel is consistent.
- */
 @Composable
 fun BouncyButton(
     onClick: () -> Unit,

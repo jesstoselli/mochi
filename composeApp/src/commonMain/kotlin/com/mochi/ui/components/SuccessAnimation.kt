@@ -1,4 +1,4 @@
-package com.mochi.ui
+package com.mochi.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
