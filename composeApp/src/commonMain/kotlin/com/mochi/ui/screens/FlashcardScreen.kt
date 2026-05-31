@@ -72,10 +72,10 @@ fun FlashcardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
+            // Progress pinned to the top (just below the status bar).
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 LinearProgressIndicator(
                     progress = { position.toFloat() / total },
@@ -91,40 +91,46 @@ fun FlashcardScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
-            CategoryPill(card.category)
-            Spacer(Modifier.height(20.dp))
+            // Card group centered in the remaining space.
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                CategoryPill(card.category)
+                Spacer(Modifier.height(20.dp))
 
-            // key(card.id) recreates the FlipCard per card, resetting it to the front.
-            key(card.id) {
-                FlipCard(
-                    front = card.front,
-                    reading = card.reading,
-                    meaning = card.back,
+                // key(card.id) recreates the FlipCard per card, resetting it to the front.
+                key(card.id) {
+                    FlipCard(
+                        front = card.front,
+                        reading = card.reading,
+                        meaning = card.back,
+                    )
+                }
+
+                val audio = card.audio
+                if (!audio.isNullOrBlank()) {
+                    Spacer(Modifier.height(20.dp))
+                    BouncyButton(
+                        onClick = onPlayAudio,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    ) {
+                        Text("🔊  Listen")
+                    }
+                }
+
+                Spacer(Modifier.height(28.dp))
+                AnswerButtons(
+                    onAnswer = { correct ->
+                        if (correct) celebrationTick++
+                        onAnswer(correct)
+                    },
                 )
             }
-
-            val audio = card.audio
-            if (!audio.isNullOrBlank()) {
-                Spacer(Modifier.height(20.dp))
-                BouncyButton(
-                    onClick = onPlayAudio,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                ) {
-                    Text("🔊  Listen")
-                }
-            }
-
-            Spacer(Modifier.height(28.dp))
-            AnswerButtons(
-                onAnswer = { correct ->
-                    if (correct) celebrationTick++
-                    onAnswer(correct)
-                },
-            )
         }
 
         // Celebration overlay — re-enters composition each time, so the animation replays.
