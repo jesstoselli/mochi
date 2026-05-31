@@ -48,15 +48,12 @@ class ReviewViewModel(
     fun startSession() {
         val today = todayEpochDay()
         val limit = settingsStore.newCardLimit()
-        val remainingNew = if (limit <= 0) {
-            Long.MAX_VALUE
-        } else {
-            (limit - statsStore.newOnDay(today)).coerceAtLeast(0)
-        }
+        val newToday = statsStore.newOnDay(today).toInt()
+        val remainingNew = if (limit <= 0) Int.MAX_VALUE else (limit - newToday).coerceAtLeast(0)
 
-        val reviews = repo.dueReviews(nowMillis())
-        val newCards = if (remainingNew > 0) repo.newCards(remainingNew) else emptyList()
-        session = reviews + newCards
+        // selectDueForReview returns new cards (next_review == null) first, then due reviews.
+        val (newCards, reviews) = repo.due(nowMillis()).partition { it.next_review == null }
+        session = reviews + newCards.take(remainingNew)
 
         if (session.isEmpty()) {
             _state.value = ReviewUiState.CaughtUp

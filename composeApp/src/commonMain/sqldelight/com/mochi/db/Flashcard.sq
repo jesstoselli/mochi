@@ -33,20 +33,7 @@ SELECT * FROM flashcard
 WHERE next_review IS NULL OR next_review <= :now
 ORDER BY next_review ASC, frequency ASC;
 
--- Cards already started (next_review set) and due now.
-selectDueReviews:
-SELECT * FROM flashcard
-WHERE next_review IS NOT NULL AND next_review <= :now
-ORDER BY next_review ASC;
-
--- Brand-new cards (never reviewed), most frequent first, capped by the daily limit.
-selectNewCards:
-SELECT * FROM flashcard
-WHERE next_review IS NULL
-ORDER BY frequency ASC
-LIMIT :limit;
-
--- How many cards have been started (used for "learned" stat).
+-- How many cards have been started (used for the "learned" stat).
 countStarted:
 SELECT COUNT(*) FROM flashcard WHERE next_review IS NOT NULL;
 

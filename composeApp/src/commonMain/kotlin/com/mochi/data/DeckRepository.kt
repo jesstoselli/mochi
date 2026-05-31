@@ -14,13 +14,9 @@ class DeckRepository(private val db: AppDatabase) {
     /** Populates the deck on first launch (idempotent). */
     suspend fun ensureSeeded() = seedIfNeeded(db)
 
-    /** Cards already started and due for review now. */
-    fun dueReviews(now: Long): List<Flashcard> =
-        db.flashcardQueries.selectDueReviews(now).executeAsList()
-
-    /** Up to [limit] brand-new cards (never reviewed). */
-    fun newCards(limit: Long): List<Flashcard> =
-        db.flashcardQueries.selectNewCards(limit).executeAsList()
+    /** All cards due now: new ones (never reviewed) and started cards past next_review. */
+    fun due(now: Long): List<Flashcard> =
+        db.flashcardQueries.selectDueForReview(now).executeAsList()
 
     /**
      * Records an answer: updates the card's schedule (simplified SM-2) and writes a
