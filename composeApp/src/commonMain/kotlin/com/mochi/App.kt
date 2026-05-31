@@ -83,9 +83,14 @@ fun App(driverFactory: DriverFactory) {
         ThemeMode.DARK -> true
     }
 
-    // Refresh stats whenever the stats tab is opened.
+    // Refresh stats when opening Stats; rebuild the session if the limit changed when
+    // returning to Review.
     LaunchedEffect(tab) {
-        if (tab == Tab.STATS) statsViewModel.refresh()
+        when (tab) {
+            Tab.STATS -> statsViewModel.refresh()
+            Tab.REVIEW -> reviewViewModel.restartIfLimitChanged()
+            Tab.SETTINGS -> Unit
+        }
     }
 
     MochiTheme(darkTheme = darkTheme) {

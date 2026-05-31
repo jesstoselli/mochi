@@ -37,6 +37,9 @@ class ReviewViewModel(
     private var reviewed = 0
     private var correct = 0
 
+    // The new-card limit the current session was built with (to detect changes).
+    private var sessionNewLimit = settingsStore.newCardLimit()
+
     init {
         viewModelScope.launch {
             repo.ensureSeeded()
@@ -48,6 +51,7 @@ class ReviewViewModel(
     fun startSession() {
         val today = todayEpochDay()
         val limit = settingsStore.newCardLimit()
+        sessionNewLimit = limit
         val newToday = statsStore.newOnDay(today).toInt()
         val remainingNew = if (limit <= 0) Int.MAX_VALUE else (limit - newToday).coerceAtLeast(0)
 
@@ -84,6 +88,11 @@ class ReviewViewModel(
         viewModelScope.launch {
             runCatching { audioPlayer.play(Res.readBytes("files/audio/$name")) }
         }
+    }
+
+    /** Rebuilds the session if the daily new-card limit changed (e.g. via Settings). */
+    fun restartIfLimitChanged() {
+        if (settingsStore.newCardLimit() != sessionNewLimit) startSession()
     }
 
     /** Ends the session without loading more (from the summary's "Done for now"). */
