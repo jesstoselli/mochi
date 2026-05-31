@@ -93,6 +93,9 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
   `App` is a thin host that observes the state and routes to a screen; the screens are
   presentation-only (data in, callbacks out). There's one ViewModel for the review flow —
   the other screens are stateless, so they don't need their own.
+- **Settings / theme**: a gear icon opens `SettingsScreen` (animated slide via `AnimatedContent`).
+  `SettingsViewModel` holds the theme preference (System/Light/Dark), persisted in the
+  `app_setting` key/value table via `SettingsStore`; `App` applies it to `MochiTheme`.
 - **SRS loop**: due cards (`selectDueForReview`) are loaded in capped sessions of
   `SESSION_SIZE` (20); `DeckRepository.recordAnswer` updates each card's schedule (simplified
   SM-2: interval/ease/next-review). When nothing is due, `CaughtUpScreen` is shown.

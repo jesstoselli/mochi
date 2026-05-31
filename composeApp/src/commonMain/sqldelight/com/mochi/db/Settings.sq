@@ -1,0 +1,12 @@
+-- Simple key/value store for app settings (e.g. theme preference).
+
+CREATE TABLE app_setting (
+    key   TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+selectSetting:
+SELECT value FROM app_setting WHERE key = ?;
+
+upsertSetting:
+INSERT OR REPLACE INTO app_setting(key, value) VALUES (?, ?);
