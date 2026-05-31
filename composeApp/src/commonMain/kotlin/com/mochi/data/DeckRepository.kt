@@ -9,6 +9,9 @@ import com.mochi.db.Flashcard
  */
 class DeckRepository(private val db: AppDatabase) {
 
+    /** Populates the deck on first launch (idempotent). */
+    suspend fun ensureSeeded() = seedIfNeeded(db)
+
     fun all(): List<Flashcard> = db.flashcardQueries.selectAll().executeAsList()
 
     fun dueForReview(now: Long): List<Flashcard> =

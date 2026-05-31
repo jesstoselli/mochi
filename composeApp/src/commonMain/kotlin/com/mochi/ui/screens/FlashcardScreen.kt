@@ -42,42 +42,27 @@ import kotlinx.coroutines.delay
 // extra time holds the finished checkmark briefly before fading out. Tune to taste.
 private const val CELEBRATION_MILLIS = 1400L
 
-// Small pause after the last card so its celebration is visible before the summary.
-private const val SESSION_END_DELAY = 700L
-
 /**
- * Runs a single finite review session over [deck]. Progress sits at the top, the card
- * is centered, and the rating buttons are anchored at the bottom. Celebrates correct
- * answers. When the last card is answered it calls [onSessionComplete]. Presentation-only.
+ * Presentation-only review screen: renders the current [card] and progress, plays its
+ * pronunciation, and reports ratings via [onAnswer]. Celebrates correct answers locally.
  */
 @Composable
 fun FlashcardScreen(
-    deck: List<Flashcard>,
-    onAnswer: (Flashcard, Boolean) -> Unit,
-    onPlayAudio: (String) -> Unit,
-    onSessionComplete: () -> Unit,
+    card: Flashcard,
+    position: Int,
+    total: Int,
+    onAnswer: (Boolean) -> Unit,
+    onPlayAudio: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Keyed on `deck` so a new session resets the position and flags.
-    var index by remember(deck) { mutableStateOf(0) }
-    var celebrationTick by remember(deck) { mutableStateOf(0) }
-    var celebrating by remember(deck) { mutableStateOf(false) }
-    var finishing by remember(deck) { mutableStateOf(false) }
-
-    if (deck.isEmpty()) return
-    val currentCard = deck[index]
+    var celebrationTick by remember { mutableStateOf(0) }
+    var celebrating by remember { mutableStateOf(false) }
 
     LaunchedEffect(celebrationTick) {
         if (celebrationTick > 0) {
             celebrating = true
             delay(CELEBRATION_MILLIS)
             celebrating = false
-        }
-    }
-    LaunchedEffect(finishing) {
-        if (finishing) {
-            delay(SESSION_END_DELAY)
-            onSessionComplete()
         }
     }
 
@@ -88,14 +73,14 @@ fun FlashcardScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 LinearProgressIndicator(
-                    progress = { (index + 1).toFloat() / deck.size },
+                    progress = { position.toFloat() / total },
                     modifier = Modifier.weight(1f).height(10.dp).clip(RoundedCornerShape(99.dp)),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    text = "${index + 1}/${deck.size}",
+                    text = "$position/$total",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -106,23 +91,23 @@ fun FlashcardScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                CategoryPill(currentCard.category)
+                CategoryPill(card.category)
                 Spacer(Modifier.height(20.dp))
 
-                // key(index) recreates the FlipCard when the card changes, resetting it to the front.
-                key(index) {
+                // key(card.id) recreates the FlipCard per card, resetting it to the front.
+                key(card.id) {
                     FlipCard(
-                        front = currentCard.front,
-                        reading = currentCard.reading,
-                        meaning = currentCard.back,
+                        front = card.front,
+                        reading = card.reading,
+                        meaning = card.back,
                     )
                 }
 
-                val audio = currentCard.audio
+                val audio = card.audio
                 if (!audio.isNullOrBlank()) {
                     Spacer(Modifier.height(20.dp))
                     BouncyButton(
-                        onClick = { onPlayAudio(audio) },
+                        onClick = onPlayAudio,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -135,9 +120,8 @@ fun FlashcardScreen(
 
             AnswerButtons(
                 onAnswer = { correct ->
-                    onAnswer(currentCard, correct)
                     if (correct) celebrationTick++
-                    if (index < deck.lastIndex) index++ else finishing = true
+                    onAnswer(correct)
                 },
             )
         }

@@ -5,6 +5,7 @@ composeMultiplatform = "1.10.3"
 sqldelight = "2.2.1"
 kotlinxSerialization = "1.9.0"
 coroutines = "1.10.2"
+lifecycle = "2.10.0"            # org.jetbrains.androidx.lifecycle (KMP), pairs with Compose MP 1.10
 # (compottie/Lottie removed: the celebration is now a pure Compose Canvas animation)
 
 # Code quality
@@ -26,6 +27,10 @@ sqldelight-native-driver = { group = "app.cash.sqldelight", name = "native-drive
 # Serialização e coroutines
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+
+# ViewModel (Compose Multiplatform)
+lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 
 # Android
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }

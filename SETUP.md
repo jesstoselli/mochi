@@ -87,11 +87,15 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
   renderer or asset needed. (We started with Lottie/Compottie but dropped it: the polished
   LottieFiles exports relied on expressions, text layers and nested precomps that the
   pure-Kotlin renderer doesn't support.)
-- **SRS loop**: `App` drives spaced repetition — it loads due cards (`selectDueForReview`)
-  in capped sessions of `SESSION_SIZE` (20), reviews them in `FlashcardScreen`, then shows
-  `SessionCompleteScreen` with the recap. `DeckRepository.recordAnswer` updates each card's
-  schedule (simplified SM-2: interval/ease/next-review). When nothing is due, `CaughtUpScreen`
-  is shown.
+- **Architecture (MVVM)**: `ReviewViewModel` (multiplatform `androidx.lifecycle.ViewModel`)
+  owns the whole flow as a `ReviewUiState` state machine (Loading → Reviewing → Complete →
+  CaughtUp) and exposes the actions (`answer`, `playCurrentAudio`, `startSession`, `finish`).
+  `App` is a thin host that observes the state and routes to a screen; the screens are
+  presentation-only (data in, callbacks out). There's one ViewModel for the review flow —
+  the other screens are stateless, so they don't need their own.
+- **SRS loop**: due cards (`selectDueForReview`) are loaded in capped sessions of
+  `SESSION_SIZE` (20); `DeckRepository.recordAnswer` updates each card's schedule (simplified
+  SM-2: interval/ease/next-review). When nothing is due, `CaughtUpScreen` is shown.
 
 ## Regenerate the deck from another .apkg
 
