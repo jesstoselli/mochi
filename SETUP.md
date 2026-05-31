@@ -98,6 +98,9 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
 - **Settings**: `SettingsViewModel` holds the theme preference (System/Light/Dark) and the
   daily new-card limit (10/20/30/Unlimited), persisted in the `app_setting` key/value table via
   `SettingsStore`; `App` applies the theme to `MochiTheme`.
+- **Home**: the Review tab opens on a landing screen (`HomeScreen`) showing how many cards
+  are ready, with a "Start studying" button — so the app doesn't auto-play audio on launch
+  before the user chooses to study. When nothing is due it shows an "all caught up" message.
 - **SRS loop (Anki-style)**: each session is the day's queue — all due reviews
   (`selectDueReviews`) plus new cards (`selectNewCards`) up to the remaining daily limit.
   `DeckRepository.recordAnswer` updates the card's schedule (simplified SM-2) and writes a row

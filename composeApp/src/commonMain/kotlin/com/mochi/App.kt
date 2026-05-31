@@ -42,8 +42,8 @@ import com.mochi.settings.SettingsViewModel
 import com.mochi.settings.ThemeMode
 import com.mochi.stats.StatsStore
 import com.mochi.stats.StatsViewModel
-import com.mochi.ui.screens.CaughtUpScreen
 import com.mochi.ui.screens.FlashcardScreen
+import com.mochi.ui.screens.HomeScreen
 import com.mochi.ui.screens.SessionCompleteScreen
 import com.mochi.ui.screens.SettingsScreen
 import com.mochi.ui.screens.StatsScreen
@@ -88,7 +88,7 @@ fun App(driverFactory: DriverFactory) {
     LaunchedEffect(tab) {
         when (tab) {
             Tab.STATS -> statsViewModel.refresh()
-            Tab.REVIEW -> reviewViewModel.restartIfLimitChanged()
+            Tab.REVIEW -> reviewViewModel.onEnterReviewTab()
             Tab.SETTINGS -> Unit
         }
     }
@@ -140,6 +140,12 @@ private fun ReviewContent(state: ReviewUiState, viewModel: ReviewViewModel) {
             CircularProgressIndicator()
         }
 
+        is ReviewUiState.Home -> HomeScreen(
+            pending = s.pending,
+            onStart = viewModel::startSession,
+            onRefresh = viewModel::goHome,
+        )
+
         is ReviewUiState.Reviewing -> FlashcardScreen(
             card = s.card,
             position = s.position,
@@ -153,7 +159,5 @@ private fun ReviewContent(state: ReviewUiState, viewModel: ReviewViewModel) {
             onContinue = viewModel::startSession,
             onDone = viewModel::finish,
         )
-
-        ReviewUiState.CaughtUp -> CaughtUpScreen(onRefresh = viewModel::startSession)
     }
 }

@@ -18,9 +18,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 /**
- * Owns the review flow as a state machine. Each "session" is the Anki-style day queue:
- * all due reviews plus new cards up to the remaining daily limit. Dependencies are
- * interfaces so the flow can be unit-tested with fakes.
+ * Owns the review flow as a state machine: Home -> Reviewing -> Complete -> Home.
+ * A "session" is the Anki-style day queue: all due reviews plus new cards up to the
+ * remaining daily limit. Dependencies are interfaces so the flow can be unit-tested.
  */
 @OptIn(ExperimentalResourceApi::class)
 class ReviewViewModel(
@@ -44,24 +44,21 @@ class ReviewViewModel(
     init {
         viewModelScope.launch {
             deck.ensureSeeded()
-            startSession()
+            goHome()
         }
     }
 
-    /** Builds the day's queue: due reviews + new cards capped by the daily limit. */
+    /** Shows the landing screen with the current count of cards ready to study. */
+    fun goHome() {
+        _state.value = ReviewUiState.Home(pending = buildQueue().size)
+    }
+
+    /** Starts (or restarts) a study session from the current day queue. */
     fun startSession() {
-        val today = todayEpochDay()
-        val limit = limitSource.newCardLimit()
-        sessionNewLimit = limit
-        val newToday = newCardCounter.newOnDay(today).toInt()
-        val remainingNew = if (limit <= 0) Int.MAX_VALUE else (limit - newToday).coerceAtLeast(0)
-
-        // selectDueForReview returns new cards (next_review == null) first, then due reviews.
-        val (newCards, reviews) = deck.due(nowMillis()).partition { it.next_review == null }
-        session = reviews + newCards.take(remainingNew)
-
+        sessionNewLimit = limitSource.newCardLimit()
+        session = buildQueue()
         if (session.isEmpty()) {
-            _state.value = ReviewUiState.CaughtUp
+            goHome()
             return
         }
         index = 0
@@ -91,14 +88,31 @@ class ReviewViewModel(
         }
     }
 
-    /** Rebuilds the session if the daily new-card limit changed (e.g. via Settings). */
-    fun restartIfLimitChanged() {
-        if (limitSource.newCardLimit() != sessionNewLimit) startSession()
+    /** Ends the session (from the summary's "Done") and returns to Home. */
+    fun finish() = goHome()
+
+    /**
+     * Called when the Review tab becomes visible: refresh the Home count, or rebuild the
+     * running session if the daily new-card limit changed (e.g. via Settings).
+     */
+    fun onEnterReviewTab() {
+        when (state.value) {
+            is ReviewUiState.Home -> goHome()
+            is ReviewUiState.Reviewing -> if (limitSource.newCardLimit() != sessionNewLimit) startSession()
+            else -> Unit
+        }
     }
 
-    /** Ends the session without loading more (from the summary's "Done for now"). */
-    fun finish() {
-        _state.value = ReviewUiState.CaughtUp
+    /** The day's queue: due reviews first, then new cards up to the remaining daily limit. */
+    private fun buildQueue(): List<Flashcard> {
+        val limit = limitSource.newCardLimit()
+        val remainingNew = if (limit <= 0) {
+            Int.MAX_VALUE
+        } else {
+            (limit - newCardCounter.newOnDay(todayEpochDay()).toInt()).coerceAtLeast(0)
+        }
+        val (newCards, reviews) = deck.due(nowMillis()).partition { it.next_review == null }
+        return reviews + newCards.take(remainingNew)
     }
 
     private fun emitReviewing() {

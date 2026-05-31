@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReviewViewModelTest {
 
-    // Unconfined Main dispatcher so the ViewModel's init coroutine (seed + startSession)
+    // Unconfined Main dispatcher so the ViewModel's init coroutine (seed + goHome)
     // runs synchronously during construction.
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -28,10 +28,18 @@ class ReviewViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun newCardsAreCappedByTheDailyLimit() {
-        val deck = FakeDeck(List(5) { card(it.toLong(), isNew = true) })
-        val vm = viewModel(deck, newToday = 0, limit = 2)
+    fun startsOnHomeWithThePendingCount() {
+        // 5 new cards, limit 2 -> 2 are ready.
+        val vm = viewModel(FakeDeck(List(5) { card(it.toLong(), isNew = true) }), newToday = 0, limit = 2)
+        val state = vm.state.value
+        assertTrue(state is ReviewUiState.Home)
+        assertEquals(2, state.pending)
+    }
 
+    @Test
+    fun newCardsAreCappedByTheDailyLimit() {
+        val vm = viewModel(FakeDeck(List(5) { card(it.toLong(), isNew = true) }), newToday = 0, limit = 2)
+        vm.startSession()
         val state = vm.state.value
         assertTrue(state is ReviewUiState.Reviewing)
         assertEquals(2, state.total)
@@ -41,10 +49,9 @@ class ReviewViewModelTest {
     fun dueReviewsAreAlwaysIncludedThenNewCardsUpToTheLimit() {
         val cards = List(2) { card(it.toLong(), isNew = false) } + List(3) { card(100L + it, isNew = true) }
         val vm = viewModel(FakeDeck(cards), newToday = 0, limit = 1)
-
-        val state = vm.state.value as ReviewUiState.Reviewing
+        vm.startSession()
         // 2 due reviews + 1 new (capped) = 3
-        assertEquals(3, state.total)
+        assertEquals(3, (vm.state.value as ReviewUiState.Reviewing).total)
     }
 
     @Test
@@ -52,15 +59,15 @@ class ReviewViewModelTest {
         val cards = List(1) { card(it.toLong(), isNew = false) } + List(3) { card(100L + it, isNew = true) }
         // newToday already equals the limit, so no new cards should be added.
         val vm = viewModel(FakeDeck(cards), newToday = 2, limit = 2)
-
-        val state = vm.state.value as ReviewUiState.Reviewing
-        assertEquals(1, state.total)
+        vm.startSession()
+        assertEquals(1, (vm.state.value as ReviewUiState.Reviewing).total)
     }
 
     @Test
     fun answeringAdvancesThenCompletesWithStats() {
         val deck = FakeDeck(List(2) { card(it.toLong(), isNew = true) })
         val vm = viewModel(deck, newToday = 0, limit = 10)
+        vm.startSession()
 
         assertEquals(1, (vm.state.value as ReviewUiState.Reviewing).position)
         vm.answer(isCorrect = true)
@@ -75,20 +82,22 @@ class ReviewViewModelTest {
     }
 
     @Test
-    fun emptyQueueShowsCaughtUp() {
+    fun emptyQueueStaysHomeWithZeroPending() {
         val vm = viewModel(FakeDeck(emptyList()), newToday = 0, limit = 20)
-        assertTrue(vm.state.value is ReviewUiState.CaughtUp)
+        val state = vm.state.value
+        assertTrue(state is ReviewUiState.Home)
+        assertEquals(0, state.pending)
     }
 
     @Test
-    fun restartIfLimitChangedRebuildsTheSession() {
-        val deck = FakeDeck(List(5) { card(it.toLong(), isNew = true) })
+    fun changingTheLimitRebuildsTheRunningSession() {
         val limit = FakeLimit(1)
-        val vm = ReviewViewModel(deck, FakeCounter(0), limit, AudioPlayer())
-
+        val vm = ReviewViewModel(FakeDeck(List(5) { card(it.toLong(), isNew = true) }), FakeCounter(0), limit, AudioPlayer())
+        vm.startSession()
         assertEquals(1, (vm.state.value as ReviewUiState.Reviewing).total)
+
         limit.value = 3
-        vm.restartIfLimitChanged()
+        vm.onEnterReviewTab()
         assertEquals(3, (vm.state.value as ReviewUiState.Reviewing).total)
     }
 
