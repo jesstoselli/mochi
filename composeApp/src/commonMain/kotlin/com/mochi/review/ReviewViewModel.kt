@@ -3,11 +3,11 @@ package com.mochi.review
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochi.audio.AudioPlayer
-import com.mochi.data.DeckRepository
+import com.mochi.data.ReviewDeck
 import com.mochi.db.Flashcard
 import com.mochi.resources.Res
-import com.mochi.settings.SettingsStore
-import com.mochi.stats.StatsStore
+import com.mochi.settings.NewCardLimitSource
+import com.mochi.stats.NewCardCounter
 import com.mochi.ui.SessionStats
 import com.mochi.util.nowMillis
 import com.mochi.util.todayEpochDay
@@ -19,13 +19,14 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 /**
  * Owns the review flow as a state machine. Each "session" is the Anki-style day queue:
- * all due reviews plus new cards up to the remaining daily limit.
+ * all due reviews plus new cards up to the remaining daily limit. Dependencies are
+ * interfaces so the flow can be unit-tested with fakes.
  */
 @OptIn(ExperimentalResourceApi::class)
 class ReviewViewModel(
-    private val repo: DeckRepository,
-    private val statsStore: StatsStore,
-    private val settingsStore: SettingsStore,
+    private val deck: ReviewDeck,
+    private val newCardCounter: NewCardCounter,
+    private val limitSource: NewCardLimitSource,
     private val audioPlayer: AudioPlayer,
 ) : ViewModel() {
 
@@ -38,11 +39,11 @@ class ReviewViewModel(
     private var correct = 0
 
     // The new-card limit the current session was built with (to detect changes).
-    private var sessionNewLimit = settingsStore.newCardLimit()
+    private var sessionNewLimit = limitSource.newCardLimit()
 
     init {
         viewModelScope.launch {
-            repo.ensureSeeded()
+            deck.ensureSeeded()
             startSession()
         }
     }
@@ -50,13 +51,13 @@ class ReviewViewModel(
     /** Builds the day's queue: due reviews + new cards capped by the daily limit. */
     fun startSession() {
         val today = todayEpochDay()
-        val limit = settingsStore.newCardLimit()
+        val limit = limitSource.newCardLimit()
         sessionNewLimit = limit
-        val newToday = statsStore.newOnDay(today).toInt()
+        val newToday = newCardCounter.newOnDay(today).toInt()
         val remainingNew = if (limit <= 0) Int.MAX_VALUE else (limit - newToday).coerceAtLeast(0)
 
         // selectDueForReview returns new cards (next_review == null) first, then due reviews.
-        val (newCards, reviews) = repo.due(nowMillis()).partition { it.next_review == null }
+        val (newCards, reviews) = deck.due(nowMillis()).partition { it.next_review == null }
         session = reviews + newCards.take(remainingNew)
 
         if (session.isEmpty()) {
@@ -71,7 +72,7 @@ class ReviewViewModel(
 
     fun answer(isCorrect: Boolean) {
         val card = session.getOrNull(index) ?: return
-        repo.recordAnswer(card, isCorrect)
+        deck.recordAnswer(card, isCorrect)
         reviewed++
         if (isCorrect) correct++
         if (index < session.lastIndex) {
@@ -92,7 +93,7 @@ class ReviewViewModel(
 
     /** Rebuilds the session if the daily new-card limit changed (e.g. via Settings). */
     fun restartIfLimitChanged() {
-        if (settingsStore.newCardLimit() != sessionNewLimit) startSession()
+        if (limitSource.newCardLimit() != sessionNewLimit) startSession()
     }
 
     /** Ends the session without loading more (from the summary's "Done for now"). */

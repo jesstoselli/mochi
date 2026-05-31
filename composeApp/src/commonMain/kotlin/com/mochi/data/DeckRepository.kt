@@ -5,24 +5,31 @@ import com.mochi.db.Flashcard
 import com.mochi.util.nowMillis
 import com.mochi.util.todayEpochDay
 
+/** What the review flow needs from the deck — lets the ViewModel be tested with fakes. */
+interface ReviewDeck {
+    suspend fun ensureSeeded()
+    fun due(now: Long): List<Flashcard>
+    fun recordAnswer(card: Flashcard, correct: Boolean)
+}
+
 /**
  * Database access layer for cards. Hides SQLDelight from the UI.
  * `Flashcard` is the data class generated from the table in Flashcard.sq.
  */
-class DeckRepository(private val db: AppDatabase) {
+class DeckRepository(private val db: AppDatabase) : ReviewDeck {
 
     /** Populates the deck on first launch (idempotent). */
-    suspend fun ensureSeeded() = seedIfNeeded(db)
+    override suspend fun ensureSeeded() = seedIfNeeded(db)
 
     /** All cards due now: new ones (never reviewed) and started cards past next_review. */
-    fun due(now: Long): List<Flashcard> =
+    override fun due(now: Long): List<Flashcard> =
         db.flashcardQueries.selectDueForReview(now).executeAsList()
 
     /**
      * Records an answer: updates the card's schedule (simplified SM-2) and writes a
      * review-log row (for streak, daily stats and the new-cards-per-day limit).
      */
-    fun recordAnswer(card: Flashcard, correct: Boolean) {
+    override fun recordAnswer(card: Flashcard, correct: Boolean) {
         val now = nowMillis()
         val wasNew = card.next_review == null
 

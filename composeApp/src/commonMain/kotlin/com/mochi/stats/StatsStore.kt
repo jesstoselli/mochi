@@ -2,12 +2,17 @@ package com.mochi.stats
 
 import com.mochi.db.AppDatabase
 
+/** Just the new-cards-today count the review flow needs (lets the ViewModel use a fake). */
+interface NewCardCounter {
+    fun newOnDay(day: Long): Long
+}
+
 /** Read-only access to review history for stats (streak, daily counts, totals). */
-class StatsStore(private val db: AppDatabase) {
+class StatsStore(private val db: AppDatabase) : NewCardCounter {
 
     fun reviewsOnDay(day: Long): Long = db.reviewLogQueries.countOnDay(day).executeAsOne()
 
-    fun newOnDay(day: Long): Long = db.reviewLogQueries.countNewOnDay(day).executeAsOne()
+    override fun newOnDay(day: Long): Long = db.reviewLogQueries.countNewOnDay(day).executeAsOne()
 
     fun distinctDaysDesc(): List<Long> = db.reviewLogQueries.distinctDaysDesc().executeAsList()
 
