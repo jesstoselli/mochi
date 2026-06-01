@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
+// Cards in a free-practice session (review regardless of schedule).
+private const val PRACTICE_SIZE = 20
+
 /**
  * Owns the review flow as a state machine: Home -> Reviewing -> Complete -> Home.
  * A "session" is the Anki-style day queue: all due reviews plus new cards up to the
@@ -41,6 +44,9 @@ class ReviewViewModel(
     // The new-card limit the current session was built with (to detect changes).
     private var sessionNewLimit = limitSource.newCardLimit()
 
+    // Free practice doesn't touch the schedule or stats.
+    private var practiceMode = false
+
     init {
         viewModelScope.launch {
             deck.ensureSeeded()
@@ -55,6 +61,7 @@ class ReviewViewModel(
 
     /** Starts (or restarts) a study session from the current day queue. */
     fun startSession() {
+        practiceMode = false
         sessionNewLimit = limitSource.newCardLimit()
         session = buildQueue()
         if (session.isEmpty()) {
@@ -67,9 +74,23 @@ class ReviewViewModel(
         emitReviewing()
     }
 
+    /** Free practice over a shuffled sample of all cards — ignores schedule, doesn't record. */
+    fun startPractice() {
+        practiceMode = true
+        session = deck.allCards().shuffled().take(PRACTICE_SIZE)
+        if (session.isEmpty()) {
+            goHome()
+            return
+        }
+        index = 0
+        reviewed = 0
+        correct = 0
+        emitReviewing()
+    }
+
     fun answer(isCorrect: Boolean) {
         val card = session.getOrNull(index) ?: return
-        deck.recordAnswer(card, isCorrect)
+        if (!practiceMode) deck.recordAnswer(card, isCorrect)
         reviewed++
         if (isCorrect) correct++
         if (index < session.lastIndex) {

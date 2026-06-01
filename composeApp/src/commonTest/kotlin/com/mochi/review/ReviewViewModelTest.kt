@@ -101,6 +101,21 @@ class ReviewViewModelTest {
         assertEquals(3, (vm.state.value as ReviewUiState.Reviewing).total)
     }
 
+    @Test
+    fun practiceDoesNotRescheduleOrRecord() {
+        val deck = FakeDeck(List(3) { card(it.toLong(), isNew = false) })
+        val vm = viewModel(deck, newToday = 0, limit = 20)
+        vm.startPractice()
+
+        assertTrue(vm.state.value is ReviewUiState.Reviewing)
+        vm.answer(isCorrect = true)
+        vm.answer(isCorrect = true)
+        vm.answer(isCorrect = false)
+        // Practice must not write to the schedule/log.
+        assertTrue(deck.answers.isEmpty())
+        assertTrue(vm.state.value is ReviewUiState.Complete)
+    }
+
     private fun viewModel(deck: ReviewDeck, newToday: Long, limit: Int) =
         ReviewViewModel(deck, FakeCounter(newToday), FakeLimit(limit), AudioPlayer())
 }
@@ -124,6 +139,7 @@ private class FakeDeck(var cards: List<Flashcard>) : ReviewDeck {
     val answers = mutableListOf<Pair<Long, Boolean>>()
     override suspend fun ensureSeeded() = Unit
     override fun due(now: Long): List<Flashcard> = cards
+    override fun allCards(): List<Flashcard> = cards
     override fun recordAnswer(card: Flashcard, correct: Boolean) {
         answers += card.id to correct
     }

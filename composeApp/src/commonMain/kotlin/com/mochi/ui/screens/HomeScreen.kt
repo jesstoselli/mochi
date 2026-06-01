@@ -23,6 +23,7 @@ fun HomeScreen(
     pending: Int,
     onStart: () -> Unit,
     onRefresh: () -> Unit,
+    onPractice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -66,7 +67,11 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
+            BouncyButton(onClick = onPractice) {
+                Text("Practice anyway")
+            }
+            Spacer(Modifier.height(12.dp))
             BouncyButton(
                 onClick = onRefresh,
                 colors = ButtonDefaults.buttonColors(

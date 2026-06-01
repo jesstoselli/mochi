@@ -144,6 +144,7 @@ private fun ReviewContent(state: ReviewUiState, viewModel: ReviewViewModel) {
             pending = s.pending,
             onStart = viewModel::startSession,
             onRefresh = viewModel::goHome,
+            onPractice = viewModel::startPractice,
         )
 
         is ReviewUiState.Reviewing -> FlashcardScreen(

@@ -9,6 +9,7 @@ import com.mochi.util.todayEpochDay
 interface ReviewDeck {
     suspend fun ensureSeeded()
     fun due(now: Long): List<Flashcard>
+    fun allCards(): List<Flashcard>
     fun recordAnswer(card: Flashcard, correct: Boolean)
 }
 
@@ -24,6 +25,10 @@ class DeckRepository(private val db: AppDatabase) : ReviewDeck {
     /** All cards due now: new ones (never reviewed) and started cards past next_review. */
     override fun due(now: Long): List<Flashcard> =
         db.flashcardQueries.selectDueForReview(now).executeAsList()
+
+    /** Every card, regardless of schedule (used for free practice). */
+    override fun allCards(): List<Flashcard> =
+        db.flashcardQueries.selectAll().executeAsList()
 
     /**
      * Records an answer: updates the card's schedule (simplified SM-2) and writes a
