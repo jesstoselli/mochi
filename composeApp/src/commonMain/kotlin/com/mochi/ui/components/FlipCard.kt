@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -105,19 +104,36 @@ fun FlipCard(
                     modifier = Modifier.graphicsLayer { rotationY = 180f }.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(
+                    BasicText(
                         text = reading,
-                        fontFamily = japaneseFont,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 16.sp,
+                            maxFontSize = 30.sp,
+                            stepSize = 1.sp,
+                        ),
+                        style = TextStyle(
+                            fontFamily = japaneseFont,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(12.dp))
-                    Text(
+                    BasicText(
                         text = meaning,
-                        fontSize = 22.sp,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 3,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 14.sp,
+                            maxFontSize = 22.sp,
+                            stepSize = 1.sp,
+                        ),
+                        style = TextStyle(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
