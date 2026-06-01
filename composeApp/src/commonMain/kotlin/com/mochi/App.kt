@@ -48,6 +48,7 @@ import com.mochi.ui.screens.SessionCompleteScreen
 import com.mochi.ui.screens.SettingsScreen
 import com.mochi.ui.screens.StatsScreen
 import com.mochi.ui.theme.MochiTheme
+import com.mochi.ui.theme.SystemBarsEffect
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     REVIEW("Review", Icons.Filled.School),
@@ -94,6 +95,7 @@ fun App(driverFactory: DriverFactory) {
     }
 
     MochiTheme(darkTheme = darkTheme) {
+        SystemBarsEffect(darkTheme)
         Scaffold(
             bottomBar = {
                 NavigationBar {

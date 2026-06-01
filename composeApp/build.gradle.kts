@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         androidMain.dependencies {
+            implementation(libs.androidx.core.ktx)
             implementation(libs.sqldelight.android.driver)
         }
         iosMain.dependencies {
