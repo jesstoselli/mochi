@@ -49,16 +49,29 @@ On first launch the app seeds itself: it reads `deck.json` and populates SQLite
 (`flashcards.db`). The screen shows one card at a time — tap to flip it, and use
 **Next** (spring bounce) to advance.
 
-## Run on iOS
+## Run on iOS (needs macOS + Xcode)
 
-The Kotlin iOS sources (`composeApp/src/iosMain`) and the Swift sources (`iosApp/iosApp/`)
-are ready. Only the **Xcode wrapper** (`iosApp.xcodeproj`) is missing, and it's safer to
-generate it with tooling than by hand. Two options:
+The Kotlin side is ready: `composeApp` produces the `ComposeApp` framework (static) and
+`composeApp/src/iosMain/.../MainViewController.kt` exposes the Compose UI. The only missing
+piece is the Xcode project (`iosApp/iosApp.xcodeproj`), which should be generated with tooling
+(a hand-written `project.pbxproj` is fragile). Our module/framework names match the Kotlin
+Multiplatform Wizard defaults (`composeApp` / `ComposeApp`), so a wizard-generated `iosApp`
+drops in cleanly:
 
-- Use the **Kotlin Multiplatform** plugin in Android Studio (Tools → KMP) to generate/open
-  the `iosApp`; or
-- Recreate the iOS skeleton with the **Kotlin Multiplatform Wizard** (kmp.jetbrains.com) and
-  point it at the `composeApp` `ComposeApp` framework.
+1. Generate a reference project at **kmp.jetbrains.com** (or Android Studio → New Project →
+   Kotlin Multiplatform) with shared **Compose Multiplatform** UI and **iOS** enabled. Keep the
+   defaults (shared module `composeApp`, framework `ComposeApp`).
+2. Copy that project's whole **`iosApp/`** folder into this repo, replacing the current one. It
+   contains the pre-wired `iosApp.xcodeproj`, the SwiftUI sources, `Assets.xcassets` and
+   `Info.plist`. Its `ContentView` already calls `MainViewControllerKt.MainViewController()` —
+   the same entry point we expose, so no code changes are needed.
+3. Open `iosApp/iosApp.xcodeproj` in Xcode, pick the `iosApp` scheme + an iOS Simulator, and Run.
+   A "Run Script" build phase invokes `./gradlew :composeApp:embedAndSignAppleFrameworkForXcode`
+   to build and embed the framework (first build is slow — it compiles Kotlin/Native).
+
+Notes: keep Kotlin 2.2.20+ (native targets), and if Xcode can't find the framework, confirm the
+build phase references `:composeApp` and that the framework search path points at
+`composeApp/build/xcode-frameworks/...`.
 
 The Swift code already calls `MainViewControllerKt.MainViewController()`, so once the
 `.xcodeproj` is linked to the framework, iOS runs the same Compose UI as Android.
