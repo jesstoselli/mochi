@@ -73,6 +73,11 @@ Notes: keep Kotlin 2.2.20+ (native targets), and if Xcode can't find the framewo
 build phase references `:composeApp` and that the framework search path points at
 `composeApp/build/xcode-frameworks/...`.
 
+Current iOS limitations (follow-ups, Android has them): pronunciation audio is a no-op on iOS
+(AVFoundation interop pending), and iOS uses the system fonts instead of the bundled
+Nunito/Zen Maru Gothic (font-from-bytes interop pending). The core flow — flashcards, flip,
+SRS, stats, settings — works on both platforms.
+
 The Swift code already calls `MainViewControllerKt.MainViewController()`, so once the
 `.xcodeproj` is linked to the framework, iOS runs the same Compose UI as Android.
 
