@@ -2,9 +2,8 @@ package com.mochi.audio
 
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.usePinned
+import kotlinx.cinterop.allocArrayOf
+import kotlinx.cinterop.memScoped
 import platform.AVFAudio.AVAudioPlayer
 import platform.Foundation.NSData
 
@@ -14,8 +13,8 @@ actual class AudioPlayer {
 
     actual fun play(bytes: ByteArray) {
         if (bytes.isEmpty()) return
-        val data = bytes.usePinned { pinned ->
-            NSData.create(bytes = pinned.addressOf(0), length = bytes.size.convert())
+        val data = memScoped {
+            NSData.create(bytes = allocArrayOf(bytes), length = bytes.size.toULong())
         }
         player?.stop()
         player = AVAudioPlayer(data = data, error = null)
