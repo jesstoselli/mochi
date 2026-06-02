@@ -3,17 +3,16 @@ import SwiftUI
 import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        // MainViewControllerKt comes from the Kotlin framework (composeApp), baseName "ComposeApp".
+    func makeUIViewController(context: Self.Context) -> UIViewController {
         MainViewControllerKt.MainViewController()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIViewController, context: Self.Context) {}
 }
 
 struct ContentView: View {
     var body: some View {
         ComposeView()
-            .ignoresSafeArea(.all) // Compose draws full screen (incl. keyboard)
+            .ignoresSafeArea()
     }
 }
