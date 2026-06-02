@@ -1,7 +1,11 @@
 package com.mochi.util
 
-/** Current wall-clock time in epoch milliseconds. Platform-specific. */
-expect fun nowMillis(): Long
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
+/** Current wall-clock time in epoch milliseconds (multiplatform stdlib clock). */
+@OptIn(ExperimentalTime::class)
+fun nowMillis(): Long = Clock.System.now().toEpochMilliseconds()
 
 /**
  * Today as an epoch-day index, used for streak/daily counters. UTC-based for simplicity
