@@ -1,29 +1,13 @@
 package com.mochi.audio
 
-import kotlinx.cinterop.BetaInteropApi
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.allocArrayOf
-import kotlinx.cinterop.memScoped
-import platform.AVFAudio.AVAudioPlayer
-import platform.Foundation.NSData
-
-@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+/**
+ * iOS audio playback is not wired yet. Building NSData from a ByteArray via the
+ * Kotlin/Native Foundation interop (NSData.create) didn't resolve in this toolchain, so
+ * this is a no-op for now — the shared review flow stays cross-platform and Android plays
+ * pronunciation normally. Revisit on-device (e.g. load the bundled file via Res.getUri +
+ * AVAudioPlayer(contentsOf:), or a small KMP audio library).
+ */
 actual class AudioPlayer {
-    private var player: AVAudioPlayer? = null
-
-    actual fun play(bytes: ByteArray) {
-        if (bytes.isEmpty()) return
-        val data = memScoped {
-            NSData.create(bytes = allocArrayOf(bytes), length = bytes.size.toULong())
-        }
-        player?.stop()
-        player = AVAudioPlayer(data = data, error = null)
-        player?.prepareToPlay()
-        player?.play()
-    }
-
-    actual fun release() {
-        player?.stop()
-        player = null
-    }
+    actual fun play(bytes: ByteArray) = Unit
+    actual fun release() = Unit
 }
