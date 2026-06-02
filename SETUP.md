@@ -1,8 +1,39 @@
 # Mochi — Japanese Flashcards (Compose Multiplatform)
 
 A Duolingo-inspired flashcard app built around the **Kaishi 1.5k** deck (1500 words),
-focused on practicing **native animations** (flip + spring) and **Lottie** in
-Compose Multiplatform (Android + iOS).
+focused on practicing **native animations** (flip + spring) in Compose Multiplatform
+(Android + iOS). Spaced-repetition study (Anki-style) with audio, stats/streaks, a daily
+new-card limit, theming and a bottom-nav layout.
+
+## Screenshots
+
+> Drop a PNG for each screen into `docs/screenshots/` and the images below render
+> automatically. (Android shown; light + dark are both supported.)
+
+### Home
+
+![Home](docs/screenshots/home.png)
+<!-- Review tab landing: how many cards are ready + "Start studying" / "Practice anyway". -->
+
+### Review (flashcard)
+
+![Review](docs/screenshots/review.png)
+<!-- Progress bar, category pill, flip card (auto-sizing JP text), Listen button, answer buttons. -->
+
+### Session complete
+
+![Session complete](docs/screenshots/session-complete.png)
+<!-- End-of-session Canvas checkmark celebration + Continue / Done. -->
+
+### Stats
+
+![Stats](docs/screenshots/stats.png)
+<!-- Streak, reviews today, words learned + 7-day bar chart. -->
+
+### Settings
+
+![Settings](docs/screenshots/settings.png)
+<!-- Theme (System/Light/Dark) + new cards per day (10/20/30/Unlimited). -->
 
 ## Architecture
 
@@ -27,16 +58,20 @@ Mochi/
 │  └─ src/
 │     ├─ commonMain/
 │     │  ├─ kotlin/com/mochi/
-│     │  │  ├─ App.kt             shared entry point (creates DB, seeds, loads deck)
-│     │  │  ├─ ui/                FlipCard, NextButton, SuccessAnimation, FlashcardScreen
-│     │  │  └─ data/              DriverFactory (expect), DeckRepository, Seed
-│     │  ├─ sqldelight/com/mochi/db/Flashcard.sq   schema + queries
-│     │  └─ composeResources/files/deck.json       1500 cards (generated from the .apkg)
-│     ├─ androidMain/             DriverFactory (Android actual)
-│     └─ iosMain/                 DriverFactory (iOS actual), MainViewController
+│     │  │  ├─ App.kt             thin host: bottom nav + routes tabs to screens
+│     │  │  ├─ review/            ReviewViewModel (state machine for the study flow)
+│     │  │  ├─ ui/screens/        Home, Flashcard, SessionComplete, Stats, Settings
+│     │  │  ├─ ui/components/     FlipCard, AnswerButtons, SuccessAnimation, charts
+│     │  │  ├─ ui/theme/          Mochi Box colors/shapes/typography + fonts (expect)
+│     │  │  ├─ util/              Time (epoch-day helpers)
+│     │  │  └─ data/              DriverFactory (expect), DeckRepository, stores, Seed
+│     │  ├─ sqldelight/com/mochi/db/   *.sq schema + queries, *.sqm migrations
+│     │  └─ composeResources/files/    deck.json (1500 cards), audio/, fonts/
+│     ├─ androidMain/             DriverFactory + AudioPlayer + fonts (Android actuals)
+│     └─ iosMain/                 DriverFactory + AudioPlayer + fonts (iOS actuals), MainViewController
 ├─ androidApp/                    pure Android application
 │  └─ src/main/                   MainActivity, AndroidManifest, res/
-└─ iosApp/                        SwiftUI app that hosts Compose (see the iOS note below)
+└─ iosApp/                        SwiftUI app that hosts Compose (pre-wired .xcodeproj)
 ```
 
 ## Run on Android
@@ -45,41 +80,29 @@ Mochi/
 2. Run **Gradle Sync** (the IDE downloads dependencies).
 3. Run the **`androidApp`** configuration on an emulator/device.
 
-On first launch the app seeds itself: it reads `deck.json` and populates SQLite
-(`flashcards.db`). The screen shows one card at a time — tap to flip it, and use
-**Next** (spring bounce) to advance.
+On first launch the app seeds itself: it reads `deck.json` and populates SQLite. The Review
+tab opens on Home; start a session to see one card at a time — tap to flip, tap **Listen**
+for pronunciation, and rate your recall to advance (animated card transition).
 
 ## Run on iOS (needs macOS + Xcode)
 
-The Kotlin side is ready: `composeApp` produces the `ComposeApp` framework (static) and
-`composeApp/src/iosMain/.../MainViewController.kt` exposes the Compose UI. The only missing
-piece is the Xcode project (`iosApp/iosApp.xcodeproj`), which should be generated with tooling
-(a hand-written `project.pbxproj` is fragile). Our module/framework names match the Kotlin
-Multiplatform Wizard defaults (`composeApp` / `ComposeApp`), so a wizard-generated `iosApp`
-drops in cleanly:
+The iOS app builds and runs. `composeApp` produces the static `ComposeApp` framework and
+`composeApp/src/iosMain/.../MainViewController.kt` exposes the Compose UI; the pre-wired
+`iosApp/iosApp.xcodeproj` hosts it (its `ContentView` calls `MainViewControllerKt.MainViewController()`).
 
-1. Generate a reference project at **kmp.jetbrains.com** (or Android Studio → New Project →
-   Kotlin Multiplatform) with shared **Compose Multiplatform** UI and **iOS** enabled. Keep the
-   defaults (shared module `composeApp`, framework `ComposeApp`).
-2. Copy that project's whole **`iosApp/`** folder into this repo, replacing the current one. It
-   contains the pre-wired `iosApp.xcodeproj`, the SwiftUI sources, `Assets.xcassets` and
-   `Info.plist`. Its `ContentView` already calls `MainViewControllerKt.MainViewController()` —
-   the same entry point we expose, so no code changes are needed.
-3. Open `iosApp/iosApp.xcodeproj` in Xcode, pick the `iosApp` scheme + an iOS Simulator, and Run.
-   A "Run Script" build phase invokes `./gradlew :composeApp:embedAndSignAppleFrameworkForXcode`
-   to build and embed the framework (first build is slow — it compiles Kotlin/Native).
+1. Open `iosApp/iosApp.xcodeproj` in Xcode, pick the `iosApp` scheme + an iOS Simulator, and Run.
+2. A "Run Script" build phase invokes `./gradlew :composeApp:embedAndSignAppleFrameworkForXcode`
+   to build and embed the framework (first build is slow — it compiles Kotlin/Native). The script
+   sets `JAVA_HOME` by scanning for Android Studio's bundled JBR, so no system JDK is required.
+3. `OTHER_LDFLAGS` links `-lsqlite3` (SQLDelight's native driver) and `-framework AVFoundation`.
 
-Notes: keep Kotlin 2.2.20+ (native targets), and if Xcode can't find the framework, confirm the
-build phase references `:composeApp` and that the framework search path points at
-`composeApp/build/xcode-frameworks/...`.
+Notes: keep Kotlin 2.2.20+ (native targets). If Xcode can't find the framework, confirm the
+build phase references `:composeApp`.
 
-Current iOS limitations (follow-ups, Android has them): pronunciation audio is a no-op on iOS
-(AVFoundation interop pending), and iOS uses the system fonts instead of the bundled
-Nunito/Zen Maru Gothic (font-from-bytes interop pending). The core flow — flashcards, flip,
-SRS, stats, settings — works on both platforms.
-
-The Swift code already calls `MainViewControllerKt.MainViewController()`, so once the
-`.xcodeproj` is linked to the framework, iOS runs the same Compose UI as Android.
+Current iOS limitations (Android has neither): pronunciation audio is a no-op on iOS
+(`NSData`-from-`ByteArray` interop pending), and iOS uses the system fonts instead of the bundled
+Nunito/Zen Maru Gothic (font-from-bytes interop pending — the system CJK font still renders
+Japanese fine). The core flow — flashcards, flip, SRS, stats, settings — works on both platforms.
 
 ## Technical notes
 
@@ -97,8 +120,9 @@ The Swift code already calls `MainViewControllerKt.MainViewController()`, so onc
 - **Audio**: the word pronunciation MP3s (~17 MB, 1500 clips) are extracted from the deck and
   bundled in `composeResources/files/audio/` under clean hashed names; `deck.json` points each
   card at its file. Playback uses a cross-platform `AudioPlayer` (`expect`/`actual`): Android
-  `MediaPlayer` with an in-memory data source, iOS `AVAudioPlayer`. Sentence audio (another
-  ~55 MB) is intentionally left out for now to keep the app slim.
+  uses `MediaPlayer` with an in-memory data source; iOS is currently a no-op (Foundation
+  `NSData`-from-bytes interop pending). Sentence audio (another ~55 MB) is intentionally left
+  out for now to keep the app slim.
 - **Celebration**: `SuccessAnimation.kt` is a pure Compose Canvas animation (a green
   circle pops in with a spring bounce, a halo ring expands and fades, and a checkmark is
   stroked on). Drawn on the GPU, so it renders identically on Android and iOS — no external
