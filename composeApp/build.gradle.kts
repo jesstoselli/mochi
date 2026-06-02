@@ -30,6 +30,8 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            // SQLDelight's native driver uses the system SQLite.
+            linkerOpts("-lsqlite3")
         }
     }
 
