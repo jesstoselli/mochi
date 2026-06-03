@@ -37,16 +37,16 @@ fun HomeScreen(
         MochiLogo(Modifier.size(112.dp))
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Mochi",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
             text = "もち",
             style = MaterialTheme.typography.titleMedium,
             fontFamily = LocalJapaneseFont.current,
             color = MaterialTheme.colorScheme.secondary,
+        )
+        Text(
+            text = "Mochi",
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.height(8.dp))
         Text(

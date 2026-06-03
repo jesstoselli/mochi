@@ -1,7 +1,12 @@
 package com.mochi.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -14,6 +19,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
 import com.mochi.ui.theme.Kurogoma
 import com.mochi.ui.theme.MatchaSoft
@@ -62,10 +68,34 @@ private val bellyPath = path(BELLY)
 
 private val Highlight = Color(0xFFFFFFFF)
 
-/** The Mochi mascot, drawn from vector paths and scaled to fill the given [modifier] size. */
+/**
+ * The Mochi mascot, drawn from vector paths and scaled to fill the given [modifier] size.
+ * When [animateEntry] is true it drops in and settles with a springy little bounce.
+ */
 @Composable
-fun MochiLogo(modifier: Modifier = Modifier) {
-    Canvas(modifier) {
+fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
+    val drop = remember { Animatable(if (animateEntry) 1f else 0f) }
+    LaunchedEffect(animateEntry) {
+        if (animateEntry) {
+            drop.animateTo(
+                targetValue = 0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow,
+                ),
+            )
+        }
+    }
+    Canvas(
+        modifier.graphicsLayer {
+            // drop = 1 lifts the mochi up and shrinks it slightly; the bouncy spring
+            // overshoots past 0, so it lands with a small bounce before resting.
+            translationY = drop.value * -size.height * 0.35f
+            val popScale = 1f - drop.value * 0.18f
+            scaleX = popScale
+            scaleY = popScale
+        },
+    ) {
         val s = size.minDimension / 64f
         scale(s, s, pivot = Offset.Zero) {
             drawPath(bodyPath, RiceFlour)
