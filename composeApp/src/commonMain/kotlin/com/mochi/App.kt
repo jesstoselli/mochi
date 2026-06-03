@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,8 @@ import com.mochi.audio.AudioPlayer
 import com.mochi.data.DeckRepository
 import com.mochi.data.DriverFactory
 import com.mochi.data.createDatabase
+import com.mochi.learning.LearningStore
+import com.mochi.learning.LearningViewModel
 import com.mochi.review.ReviewUiState
 import com.mochi.review.ReviewViewModel
 import com.mochi.settings.SettingsStore
@@ -44,6 +47,7 @@ import com.mochi.stats.StatsStore
 import com.mochi.stats.StatsViewModel
 import com.mochi.ui.screens.FlashcardScreen
 import com.mochi.ui.screens.HomeScreen
+import com.mochi.ui.screens.LearningScreen
 import com.mochi.ui.screens.SessionCompleteScreen
 import com.mochi.ui.screens.SettingsScreen
 import com.mochi.ui.screens.StatsScreen
@@ -52,6 +56,7 @@ import com.mochi.ui.theme.SystemBarsEffect
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     REVIEW("Review", Icons.Filled.School),
+    LEARNING("Learning", Icons.Filled.Style),
     STATS("Stats", Icons.Filled.BarChart),
     SETTINGS("Settings", Icons.Filled.Settings),
 }
@@ -68,14 +73,18 @@ fun App(driverFactory: DriverFactory) {
     val settingsStore = remember { SettingsStore(db) }
     val audioPlayer = remember { AudioPlayer() }
 
+    val learningStore = remember { LearningStore(db) }
+
     val reviewViewModel = viewModel { ReviewViewModel(repo, statsStore, settingsStore, audioPlayer) }
     val settingsViewModel = viewModel { SettingsViewModel(settingsStore) }
     val statsViewModel = viewModel { StatsViewModel(statsStore) }
+    val learningViewModel = viewModel { LearningViewModel(learningStore, audioPlayer) }
 
     val reviewState by reviewViewModel.state.collectAsState()
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val newCardLimit by settingsViewModel.newCardLimit.collectAsState()
     val stats by statsViewModel.stats.collectAsState()
+    val learningWords by learningViewModel.words.collectAsState()
     var tab by remember { mutableStateOf(Tab.REVIEW) }
 
     val darkTheme = when (themeMode) {
@@ -90,6 +99,7 @@ fun App(driverFactory: DriverFactory) {
         when (tab) {
             Tab.STATS -> statsViewModel.refresh()
             Tab.REVIEW -> reviewViewModel.onEnterReviewTab()
+            Tab.LEARNING -> learningViewModel.refresh()
             Tab.SETTINGS -> Unit
         }
     }
@@ -121,6 +131,10 @@ fun App(driverFactory: DriverFactory) {
                 ) { current ->
                     when (current) {
                         Tab.REVIEW -> ReviewContent(reviewState, reviewViewModel)
+                        Tab.LEARNING -> LearningScreen(
+                            words = learningWords,
+                            onPlay = learningViewModel::play,
+                        )
                         Tab.STATS -> StatsScreen(stats = stats)
                         Tab.SETTINGS -> SettingsScreen(
                             themeMode = themeMode,

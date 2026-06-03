@@ -24,3 +24,13 @@ SELECT COUNT(*) FROM review_log WHERE day = :day AND was_new = 1;
 
 distinctDaysDesc:
 SELECT DISTINCT day FROM review_log ORDER BY day DESC;
+
+-- Words whose most recent answer was "Still learning" (correct = 0), newest first.
+-- One row per card; a word drops off once it's answered "I knew it" again.
+stillLearning:
+SELECT f.id, f.front, f.reading, f.back, f.audio
+FROM flashcard f
+JOIN review_log r ON r.card_id = f.id
+WHERE r.id = (SELECT MAX(r2.id) FROM review_log r2 WHERE r2.card_id = f.id)
+  AND r.correct = 0
+ORDER BY r.reviewed_at DESC;
