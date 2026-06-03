@@ -4,9 +4,12 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
+import kotlinx.coroutines.launch
 import com.mochi.ui.theme.Kurogoma
 import com.mochi.ui.theme.MatchaSoft
 import com.mochi.ui.theme.RiceFlour
@@ -75,26 +79,34 @@ private val Highlight = Color(0xFFFFFFFF)
 @Composable
 fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
     val drop = remember { Animatable(if (animateEntry) 1f else 0f) }
+    val scope = rememberCoroutineScope()
+    suspend fun bounce() {
+        drop.snapTo(1f)
+        drop.animateTo(
+            targetValue = 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        )
+    }
     LaunchedEffect(animateEntry) {
-        if (animateEntry) {
-            drop.animateTo(
-                targetValue = 0f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow,
-                ),
-            )
-        }
+        if (animateEntry) bounce()
     }
     Canvas(
-        modifier.graphicsLayer {
-            // drop = 1 lifts the mochi up and shrinks it slightly; the bouncy spring
-            // overshoots past 0, so it lands with a small bounce before resting.
-            translationY = drop.value * -size.height * 0.35f
-            val popScale = 1f - drop.value * 0.18f
-            scaleX = popScale
-            scaleY = popScale
-        },
+        modifier
+            .graphicsLayer {
+                // drop = 1 lifts the mochi up and shrinks it slightly; the bouncy spring
+                // overshoots past 0, so it lands with a small bounce before resting.
+                translationY = drop.value * -size.height * 0.35f
+                val popScale = 1f - drop.value * 0.18f
+                scaleX = popScale
+                scaleY = popScale
+            }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { scope.launch { bounce() } },
     ) {
         val s = size.minDimension / 64f
         scale(s, s, pivot = Offset.Zero) {
