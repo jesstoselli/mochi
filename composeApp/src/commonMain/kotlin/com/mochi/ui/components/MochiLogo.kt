@@ -7,9 +7,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -24,11 +28,15 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
-import kotlinx.coroutines.launch
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.mochi.audio.AudioPlayer
+import com.mochi.resources.Res
 import com.mochi.ui.theme.Kurogoma
 import com.mochi.ui.theme.MatchaSoft
 import com.mochi.ui.theme.RiceFlour
 import com.mochi.ui.theme.SakuraPink
+import kotlinx.coroutines.launch
 
 // Vector paths from the source artwork (docs/icon/mochi.svg), authored in a 0..64 viewBox.
 // Drawn on a Canvas (like SuccessAnimation) so it renders identically on Android and iOS
@@ -80,6 +88,17 @@ private val Highlight = Color(0xFFFFFFFF)
 fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
     val drop = remember { Animatable(if (animateEntry) 1f else 0f) }
     val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+
+    val player = remember { AudioPlayer() }
+    var clickSound by remember { mutableStateOf<ByteArray?>(null) }
+    LaunchedEffect(Unit) {
+        clickSound = runCatching { Res.readBytes("files/click.wav") }.getOrNull()
+    }
+    DisposableEffect(player) {
+        onDispose { player.release() }
+    }
+
     suspend fun bounce() {
         drop.snapTo(1f)
         drop.animateTo(
@@ -89,6 +108,11 @@ fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
                 stiffness = Spring.StiffnessLow,
             ),
         )
+    }
+    fun onTap() {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        clickSound?.let { player.play(it) }
+        scope.launch { bounce() }
     }
     LaunchedEffect(animateEntry) {
         if (animateEntry) bounce()
@@ -106,7 +130,7 @@ fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-            ) { scope.launch { bounce() } },
+            ) { onTap() },
     ) {
         val s = size.minDimension / 64f
         scale(s, s, pivot = Offset.Zero) {
