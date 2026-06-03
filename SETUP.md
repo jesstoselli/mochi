@@ -1,39 +1,7 @@
-# Mochi — Japanese Flashcards (Compose Multiplatform)
+# Setup & Development — Mochi
 
-A Duolingo-inspired flashcard app built around the **Kaishi 1.5k** deck (1500 words),
-focused on practicing **native animations** (flip + spring) in Compose Multiplatform
-(Android + iOS). Spaced-repetition study (Anki-style) with audio, stats/streaks, a daily
-new-card limit, theming and a bottom-nav layout.
-
-## Screenshots
-
-> Drop a PNG for each screen into `docs/screenshots/` and the images below render
-> automatically. (Android shown; light + dark are both supported.)
-
-### Home
-
-![Home](docs/screenshots/home.png)
-<!-- Review tab landing: how many cards are ready + "Start studying" / "Practice anyway". -->
-
-### Review (flashcard)
-
-![Review](docs/screenshots/review.png)
-<!-- Progress bar, category pill, flip card (auto-sizing JP text), Listen button, answer buttons. -->
-
-### Session complete
-
-![Session complete](docs/screenshots/session-complete.png)
-<!-- End-of-session Canvas checkmark celebration + Continue / Done. -->
-
-### Stats
-
-![Stats](docs/screenshots/stats.png)
-<!-- Streak, reviews today, words learned + 7-day bar chart. -->
-
-### Settings
-
-![Settings](docs/screenshots/settings.png)
-<!-- Theme (System/Light/Dark) + new cards per day (10/20/30/Unlimited). -->
+How to build, run and work on the project. For what the app is and what it does, see
+**[README.md](README.md)**.
 
 ## Architecture
 
@@ -104,6 +72,11 @@ Current iOS limitations (Android has neither): pronunciation audio is a no-op on
 Nunito/Zen Maru Gothic (font-from-bytes interop pending — the system CJK font still renders
 Japanese fine). The core flow — flashcards, flip, SRS, stats, settings — works on both platforms.
 
+## Code quality
+
+ktlint + detekt are wired into both modules. Run `./gradlew ktlintFormat` to auto-format, and
+`./gradlew ktlintCheck detekt` to verify. detekt config lives in `config/detekt/detekt.yml`.
+
 ## Technical notes
 
 - **Versions**: Kotlin 2.2.20, AGP 9.2, compileSdk 36 — bleeding edge. All versions are
@@ -115,8 +88,6 @@ Japanese fine). The core flow — flashcards, flip, SRS, stats, settings — wor
   current AGP 9 KMP-library + Compose Resources setup. Both are OFL (open source); Zen Maru
   Gothic (a ~3.8 MB/weight CJK font) was subset with `fonttools` to the deck's glyphs
   (kanji used + full kana + ASCII), ~440 KB per weight.
-- **Code quality**: ktlint + detekt are wired into both modules. Run `./gradlew ktlintFormat`
-  to auto-format, and `./gradlew ktlintCheck detekt` to verify.
 - **Audio**: the word pronunciation MP3s (~17 MB, 1500 clips) are extracted from the deck and
   bundled in `composeResources/files/audio/` under clean hashed names; `deck.json` points each
   card at its file. Playback uses a cross-platform `AudioPlayer` (`expect`/`actual`): Android
