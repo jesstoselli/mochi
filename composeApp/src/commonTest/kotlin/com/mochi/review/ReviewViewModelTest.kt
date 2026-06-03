@@ -72,13 +72,35 @@ class ReviewViewModelTest {
         assertEquals(1, (vm.state.value as ReviewUiState.Reviewing).position)
         vm.answer(isCorrect = true)
         assertEquals(2, (vm.state.value as ReviewUiState.Reviewing).position)
-        vm.answer(isCorrect = false)
+        vm.answer(isCorrect = true)
 
         val state = vm.state.value
         assertTrue(state is ReviewUiState.Complete)
         assertEquals(2, state.stats.reviewed)
-        assertEquals(1, state.stats.correct)
+        assertEquals(2, state.stats.correct)
         assertEquals(2, deck.answers.size)
+    }
+
+    @Test
+    fun missedCardReturnsToTheQueueUntilAnsweredRight() {
+        val deck = FakeDeck(List(2) { card(it.toLong(), isNew = true) })
+        val vm = viewModel(deck, newToday = 0, limit = 10)
+        vm.startSession()
+
+        vm.answer(isCorrect = false) // card 0 missed -> requeued at the end
+        val grown = vm.state.value as ReviewUiState.Reviewing
+        assertEquals(3, grown.total)
+
+        vm.answer(isCorrect = true) // card 1
+        val retry = vm.state.value as ReviewUiState.Reviewing
+        assertEquals(0L, retry.card.id) // the missed card is back
+
+        vm.answer(isCorrect = true) // now it sticks -> session completes
+        val state = vm.state.value
+        assertTrue(state is ReviewUiState.Complete)
+        assertEquals(3, state.stats.reviewed)
+        assertEquals(2, state.stats.correct)
+        assertEquals(3, deck.answers.size)
     }
 
     @Test
@@ -110,10 +132,11 @@ class ReviewViewModelTest {
         assertTrue(vm.state.value is ReviewUiState.Reviewing)
         vm.answer(isCorrect = true)
         vm.answer(isCorrect = true)
-        vm.answer(isCorrect = false)
+        vm.answer(isCorrect = false) // requeued — practice drills missed cards too
+        vm.answer(isCorrect = true)
         // Practice logs each answer (so the "Still learning" list updates) but never reschedules.
         assertTrue(deck.answers.isEmpty())
-        assertEquals(3, deck.practiceAnswers.size)
+        assertEquals(4, deck.practiceAnswers.size)
         assertTrue(vm.state.value is ReviewUiState.Complete)
     }
 
@@ -142,8 +165,9 @@ private class FakeDeck(var cards: List<Flashcard>) : ReviewDeck {
     override suspend fun ensureSeeded() = Unit
     override fun due(now: Long): List<Flashcard> = cards
     override fun allCards(): List<Flashcard> = cards
-    override fun recordAnswer(card: Flashcard, correct: Boolean) {
+    override fun recordAnswer(card: Flashcard, correct: Boolean): Flashcard {
         answers += card.id to correct
+        return card
     }
     override fun recordPractice(card: Flashcard, correct: Boolean) {
         practiceAnswers += card.id to correct

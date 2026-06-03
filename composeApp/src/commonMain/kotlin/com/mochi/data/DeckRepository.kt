@@ -10,7 +10,9 @@ interface ReviewDeck {
     suspend fun ensureSeeded()
     fun due(now: Long): List<Flashcard>
     fun allCards(): List<Flashcard>
-    fun recordAnswer(card: Flashcard, correct: Boolean)
+
+    /** Records the answer and returns the card with its updated SRS state. */
+    fun recordAnswer(card: Flashcard, correct: Boolean): Flashcard
 
     /** Logs a free-practice answer (for the "Still learning" list) without rescheduling the card. */
     fun recordPractice(card: Flashcard, correct: Boolean)
@@ -34,10 +36,11 @@ class DeckRepository(private val db: AppDatabase) : ReviewDeck {
         db.flashcardQueries.selectAll().executeAsList()
 
     /**
-     * Records an answer: updates the card's schedule (simplified SM-2) and writes a
-     * review-log row (for streak, daily stats and the new-cards-per-day limit).
+     * Records an answer: updates the card's schedule (simplified SM-2), writes a review-log
+     * row (for streak, daily stats and the new-cards-per-day limit), and returns the card
+     * with its new SRS state (so an in-session requeue works on fresh values).
      */
-    override fun recordAnswer(card: Flashcard, correct: Boolean) {
+    override fun recordAnswer(card: Flashcard, correct: Boolean): Flashcard {
         val now = nowMillis()
         val wasNew = card.next_review == null
 
@@ -62,6 +65,7 @@ class DeckRepository(private val db: AppDatabase) : ReviewDeck {
             correct = if (correct) 1L else 0L,
             practice = 0L,
         )
+        return card.copy(next_review = next, interval_days = newInterval, ease = newEase)
     }
 
     /**

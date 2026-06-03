@@ -23,7 +23,8 @@ private const val PRACTICE_SIZE = 20
 /**
  * Owns the review flow as a state machine: Home -> Reviewing -> Complete -> Home.
  * A "session" is the Anki-style day queue: all due reviews plus new cards up to the
- * remaining daily limit. Dependencies are interfaces so the flow can be unit-tested.
+ * remaining daily limit. Missed cards go back to the end of the queue (relearning) until
+ * answered correctly. Dependencies are interfaces so the flow can be unit-tested.
  */
 @OptIn(ExperimentalResourceApi::class)
 class ReviewViewModel(
@@ -91,9 +92,19 @@ class ReviewViewModel(
 
     fun answer(isCorrect: Boolean) {
         val card = session.getOrNull(index) ?: return
-        if (practiceMode) deck.recordPractice(card, isCorrect) else deck.recordAnswer(card, isCorrect)
+        val updated = if (practiceMode) {
+            deck.recordPractice(card, isCorrect)
+            card
+        } else {
+            deck.recordAnswer(card, isCorrect)
+        }
         reviewed++
-        if (isCorrect) correct++
+        if (isCorrect) {
+            correct++
+        } else {
+            // Relearning: a missed card returns to the end of the queue until answered right.
+            session = session + updated
+        }
         if (index < session.lastIndex) {
             index++
             emitReviewing()
