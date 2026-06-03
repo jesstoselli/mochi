@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon: the mochi body as a white (alpha-only) silhouette. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M21.3753,10.2262C8.42769,16.5472 6,30.7109 6,37.4416C6.80923,44.465 8.42769,46.2208 11.6646,49.7325C13.7277,51.9707 22.1479,55 31.0861,55C38.3692,55 46.0568,53.2442 50.5076,50.6104C53.4748,48.8546 59.1601,41.8312 57.7906,32.1741C56.1722,20.7612 48.0799,12.5673 43.2245,10.2262C35.9415,6.71448 26.2307,7.85578 21.3753,10.2262Z" />
+</vector>

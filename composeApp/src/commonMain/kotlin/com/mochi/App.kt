@@ -38,6 +38,7 @@ import com.mochi.data.DriverFactory
 import com.mochi.data.createDatabase
 import com.mochi.learning.LearningStore
 import com.mochi.learning.LearningViewModel
+import com.mochi.reminder.ReminderScheduler
 import com.mochi.review.ReviewUiState
 import com.mochi.review.ReviewViewModel
 import com.mochi.settings.SettingsStore
@@ -63,10 +64,10 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 
 /**
  * Thin entry point: builds dependencies + view models, applies the chosen theme, and
- * hosts a bottom-navigation Scaffold switching between Review, Stats and Settings.
+ * hosts a bottom-navigation Scaffold switching between Review, Learning, Stats and Settings.
  */
 @Composable
-fun App(driverFactory: DriverFactory) {
+fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     val db = remember { createDatabase(driverFactory) }
     val repo = remember { DeckRepository(db) }
     val statsStore = remember { StatsStore(db) }
@@ -76,13 +77,15 @@ fun App(driverFactory: DriverFactory) {
     val learningStore = remember { LearningStore(db) }
 
     val reviewViewModel = viewModel { ReviewViewModel(repo, statsStore, settingsStore, audioPlayer) }
-    val settingsViewModel = viewModel { SettingsViewModel(settingsStore) }
+    val settingsViewModel = viewModel { SettingsViewModel(settingsStore, reminderScheduler) }
     val statsViewModel = viewModel { StatsViewModel(statsStore) }
     val learningViewModel = viewModel { LearningViewModel(learningStore, audioPlayer) }
 
     val reviewState by reviewViewModel.state.collectAsState()
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val newCardLimit by settingsViewModel.newCardLimit.collectAsState()
+    val reminderEnabled by settingsViewModel.reminderEnabled.collectAsState()
+    val reminderTime by settingsViewModel.reminderTime.collectAsState()
     val stats by statsViewModel.stats.collectAsState()
     val learningWords by learningViewModel.words.collectAsState()
     var tab by remember { mutableStateOf(Tab.REVIEW) }
@@ -142,6 +145,10 @@ fun App(driverFactory: DriverFactory) {
                             onThemeChange = settingsViewModel::setThemeMode,
                             newCardLimit = newCardLimit,
                             onNewCardLimitChange = settingsViewModel::setNewCardLimit,
+                            reminderEnabled = reminderEnabled,
+                            onReminderEnabledChange = settingsViewModel::setReminderEnabled,
+                            reminderTime = reminderTime,
+                            onReminderTimeChange = settingsViewModel::setReminderTime,
                         )
                     }
                 }
