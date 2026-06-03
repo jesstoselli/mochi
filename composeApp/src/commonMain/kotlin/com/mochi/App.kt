@@ -99,7 +99,7 @@ fun App(driverFactory: DriverFactory) {
         when (tab) {
             Tab.STATS -> statsViewModel.refresh()
             Tab.REVIEW -> reviewViewModel.onEnterReviewTab()
-            Tab.LEARNING -> learningViewModel.refresh()
+            Tab.LEARNING -> Unit // the list is a reactive Flow; nothing to refresh
             Tab.SETTINGS -> Unit
         }
     }
