@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.mochi.settings.ThemeMode
 
@@ -68,10 +70,14 @@ private fun SectionLabel(text: String) {
 
 @Composable
 private fun OptionRow(selected: Boolean, label: String, onClick: () -> Unit) {
+    val haptics = LocalHapticFeedback.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable {
+                if (!selected) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onClick()
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
