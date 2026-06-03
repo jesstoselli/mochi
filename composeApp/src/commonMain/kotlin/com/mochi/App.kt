@@ -97,9 +97,10 @@ fun App(driverFactory: DriverFactory) {
     // returning to Review.
     LaunchedEffect(tab) {
         when (tab) {
-            Tab.STATS -> statsViewModel.refresh()
             Tab.REVIEW -> reviewViewModel.onEnterReviewTab()
-            Tab.LEARNING -> Unit // the list is a reactive Flow; nothing to refresh
+            // Stats and the Still-learning list are reactive Flows — nothing to refresh.
+            Tab.STATS -> Unit
+            Tab.LEARNING -> Unit
             Tab.SETTINGS -> Unit
         }
     }

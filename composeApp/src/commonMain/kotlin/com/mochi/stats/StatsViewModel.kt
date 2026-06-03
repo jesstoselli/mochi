@@ -1,10 +1,17 @@
 package com.mochi.stats
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.mochi.util.todayEpochDay
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
+// Keep the DB subscription alive briefly across config/recomposition gaps.
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 data class StatsUiState(
     val streak: Int = 0,
@@ -14,16 +21,20 @@ data class StatsUiState(
     val last7Days: List<Long> = emptyList(),
 )
 
-/** Computes the essential stats (streak, today's reviews, words learned) from the log. */
+/**
+ * Computes the essential stats (streak, today's reviews, words learned) from the log as a
+ * reactive [StateFlow] — it recomputes automatically whenever the review data changes.
+ */
 class StatsViewModel(private val statsStore: StatsStore) : ViewModel() {
 
-    private val _stats = MutableStateFlow(compute())
-    val stats: StateFlow<StatsUiState> = _stats.asStateFlow()
-
-    /** Recompute — call when the stats tab becomes visible. */
-    fun refresh() {
-        _stats.value = compute()
-    }
+    val stats: StateFlow<StatsUiState> = statsStore.changes()
+        .map { compute() }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
+            initialValue = StatsUiState(),
+        )
 
     private fun compute(): StatsUiState {
         val today = todayEpochDay()
