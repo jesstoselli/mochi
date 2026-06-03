@@ -11,6 +11,9 @@ interface ReviewDeck {
     fun due(now: Long): List<Flashcard>
     fun allCards(): List<Flashcard>
     fun recordAnswer(card: Flashcard, correct: Boolean)
+
+    /** Logs a free-practice answer (for the "Still learning" list) without rescheduling the card. */
+    fun recordPractice(card: Flashcard, correct: Boolean)
 }
 
 /**
@@ -57,6 +60,23 @@ class DeckRepository(private val db: AppDatabase) : ReviewDeck {
             day = todayEpochDay(),
             was_new = if (wasNew) 1L else 0L,
             correct = if (correct) 1L else 0L,
+            practice = 0L,
+        )
+    }
+
+    /**
+     * Records a free-practice answer: writes a review-log row flagged as practice (so the
+     * "Still learning" list stays current) but leaves the card's SRS schedule untouched, and
+     * the practice flag keeps it out of streak/daily stats.
+     */
+    override fun recordPractice(card: Flashcard, correct: Boolean) {
+        db.reviewLogQueries.insertLog(
+            card_id = card.id,
+            reviewed_at = nowMillis(),
+            day = todayEpochDay(),
+            was_new = if (card.next_review == null) 1L else 0L,
+            correct = if (correct) 1L else 0L,
+            practice = 1L,
         )
     }
 }

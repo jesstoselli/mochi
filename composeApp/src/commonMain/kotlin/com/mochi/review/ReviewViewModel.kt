@@ -44,7 +44,8 @@ class ReviewViewModel(
     // The new-card limit the current session was built with (to detect changes).
     private var sessionNewLimit = limitSource.newCardLimit()
 
-    // Free practice doesn't touch the schedule or stats.
+    // Free practice doesn't touch the schedule or stats — but it still logs the answer
+    // (flagged as practice) so the "Still learning" list stays current.
     private var practiceMode = false
 
     init {
@@ -74,7 +75,7 @@ class ReviewViewModel(
         emitReviewing()
     }
 
-    /** Free practice over a shuffled sample of all cards — ignores schedule, doesn't record. */
+    /** Free practice over a shuffled sample of all cards — ignores schedule, logs as practice. */
     fun startPractice() {
         practiceMode = true
         session = deck.allCards().shuffled().take(PRACTICE_SIZE)
@@ -90,7 +91,7 @@ class ReviewViewModel(
 
     fun answer(isCorrect: Boolean) {
         val card = session.getOrNull(index) ?: return
-        if (!practiceMode) deck.recordAnswer(card, isCorrect)
+        if (practiceMode) deck.recordPractice(card, isCorrect) else deck.recordAnswer(card, isCorrect)
         reviewed++
         if (isCorrect) correct++
         if (index < session.lastIndex) {

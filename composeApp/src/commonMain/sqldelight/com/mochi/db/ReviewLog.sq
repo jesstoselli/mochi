@@ -7,23 +7,25 @@ CREATE TABLE review_log (
     reviewed_at INTEGER NOT NULL,
     day         INTEGER NOT NULL,
     was_new     INTEGER NOT NULL,
-    correct     INTEGER NOT NULL
+    correct     INTEGER NOT NULL,
+    practice    INTEGER NOT NULL DEFAULT 0  -- 1 = free practice (excluded from streak/stats)
 );
 
 CREATE INDEX review_log_day ON review_log(day);
 
 insertLog:
-INSERT INTO review_log(card_id, reviewed_at, day, was_new, correct)
-VALUES (?, ?, ?, ?, ?);
+INSERT INTO review_log(card_id, reviewed_at, day, was_new, correct, practice)
+VALUES (?, ?, ?, ?, ?, ?);
 
+-- Streak, daily counts and the new-card limit only count scheduled reviews (practice = 0).
 countOnDay:
-SELECT COUNT(*) FROM review_log WHERE day = :day;
+SELECT COUNT(*) FROM review_log WHERE day = :day AND practice = 0;
 
 countNewOnDay:
-SELECT COUNT(*) FROM review_log WHERE day = :day AND was_new = 1;
+SELECT COUNT(*) FROM review_log WHERE day = :day AND was_new = 1 AND practice = 0;
 
 distinctDaysDesc:
-SELECT DISTINCT day FROM review_log ORDER BY day DESC;
+SELECT DISTINCT day FROM review_log WHERE practice = 0 ORDER BY day DESC;
 
 -- Words whose most recent answer was "Still learning" (correct = 0), newest first.
 -- One row per card; a word drops off once it's answered "I knew it" again.

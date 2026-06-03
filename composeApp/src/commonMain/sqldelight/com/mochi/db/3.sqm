@@ -1,0 +1,4 @@
+-- Migration v3 -> v4: flag practice answers so they can be logged (to keep the
+-- "Still learning" list current) without affecting streak, daily stats or the new-card limit.
+
+ALTER TABLE review_log ADD COLUMN practice INTEGER NOT NULL DEFAULT 0;
