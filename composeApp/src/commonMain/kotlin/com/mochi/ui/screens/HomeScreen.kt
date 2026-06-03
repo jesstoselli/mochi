@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mochi.ui.components.BouncyButton
+import com.mochi.ui.components.MochiLogo
+import com.mochi.ui.theme.LocalJapaneseFont
 
 /** Landing screen: app identity + a clear call to start studying (or "caught up"). */
 @Composable
@@ -31,11 +34,19 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        MochiLogo(Modifier.size(112.dp))
+        Spacer(Modifier.height(16.dp))
         Text(
             text = "Mochi",
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            text = "もち",
+            style = MaterialTheme.typography.titleMedium,
+            fontFamily = LocalJapaneseFont.current,
+            color = MaterialTheme.colorScheme.secondary,
         )
         Spacer(Modifier.height(8.dp))
         Text(
