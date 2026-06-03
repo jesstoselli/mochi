@@ -10,4 +10,7 @@
 
     <!-- Cold-start background (RiceFlour). Dark variant in values-night/colors.xml. -->
     <color name="splash_background">#FFFBFBFD</color>
+
+    <!-- Circular badge behind the splash mochi (cream), so the white mochi pops in both themes. -->
+    <color name="splash_icon_background">#FFFFF1F4</color>
 </resources>

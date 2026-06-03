@@ -16,6 +16,7 @@ detekt = "2.0.0-alpha.2"          # 2.x is the line built for Kotlin 2.x (plugin
 androidxActivityCompose = "1.13.0"
 androidxCoreKtx = "1.18.0"
 androidxLifecycle = "2.10.0"
+androidxCoreSplashscreen = "1.0.1"
 
 [libraries]
 # SQLDelight
@@ -36,6 +37,7 @@ lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name
 # Android
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCoreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidxCoreSplashscreen" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
 
 [plugins]
