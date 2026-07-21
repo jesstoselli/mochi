@@ -38,6 +38,9 @@ import com.mochi.data.DriverFactory
 import com.mochi.data.createDatabase
 import com.mochi.learning.LearningStore
 import com.mochi.learning.LearningViewModel
+import com.mochi.library.LibraryStore
+import com.mochi.library.LibraryViewModel
+import com.mochi.library.UnitSummary
 import com.mochi.reminder.ReminderScheduler
 import com.mochi.review.ReviewUiState
 import com.mochi.review.ReviewViewModel
@@ -47,8 +50,8 @@ import com.mochi.settings.ThemeMode
 import com.mochi.stats.StatsStore
 import com.mochi.stats.StatsViewModel
 import com.mochi.ui.screens.FlashcardScreen
-import com.mochi.ui.screens.HomeScreen
 import com.mochi.ui.screens.LearningScreen
+import com.mochi.ui.screens.LibraryScreen
 import com.mochi.ui.screens.SessionCompleteScreen
 import com.mochi.ui.screens.SettingsScreen
 import com.mochi.ui.screens.StatsScreen
@@ -75,11 +78,13 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     val audioPlayer = remember { AudioPlayer() }
 
     val learningStore = remember { LearningStore(db) }
+    val libraryStore = remember { LibraryStore(db) }
 
     val reviewViewModel = viewModel { ReviewViewModel(repo, statsStore, settingsStore, audioPlayer) }
     val settingsViewModel = viewModel { SettingsViewModel(settingsStore, reminderScheduler) }
     val statsViewModel = viewModel { StatsViewModel(statsStore) }
     val learningViewModel = viewModel { LearningViewModel(learningStore, audioPlayer) }
+    val libraryViewModel = viewModel { LibraryViewModel(libraryStore) }
 
     val reviewState by reviewViewModel.state.collectAsState()
     val themeMode by settingsViewModel.themeMode.collectAsState()
@@ -88,6 +93,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     val reminderTime by settingsViewModel.reminderTime.collectAsState()
     val stats by statsViewModel.stats.collectAsState()
     val learningWords by learningViewModel.words.collectAsState()
+    val units by libraryViewModel.units.collectAsState()
     var tab by remember { mutableStateOf(Tab.REVIEW) }
 
     val darkTheme = when (themeMode) {
@@ -134,7 +140,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
                     label = "tabs",
                 ) { current ->
                     when (current) {
-                        Tab.REVIEW -> ReviewContent(reviewState, reviewViewModel)
+                        Tab.REVIEW -> ReviewContent(reviewState, units, reviewViewModel)
                         Tab.LEARNING -> LearningScreen(
                             words = learningWords,
                             onPlay = learningViewModel::play,
@@ -158,17 +164,19 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
 }
 
 @Composable
-private fun ReviewContent(state: ReviewUiState, viewModel: ReviewViewModel) {
+private fun ReviewContent(
+    state: ReviewUiState,
+    units: List<UnitSummary>,
+    viewModel: ReviewViewModel,
+) {
     when (val s = state) {
         ReviewUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
 
-        is ReviewUiState.Home -> HomeScreen(
-            pending = s.pending,
-            onStart = viewModel::startSession,
-            onRefresh = viewModel::goHome,
-            onPractice = viewModel::startPractice,
+        ReviewUiState.Idle -> LibraryScreen(
+            units = units,
+            onOpenUnit = viewModel::openUnit,
         )
 
         is ReviewUiState.Reviewing -> FlashcardScreen(
@@ -181,7 +189,7 @@ private fun ReviewContent(state: ReviewUiState, viewModel: ReviewViewModel) {
 
         is ReviewUiState.Complete -> SessionCompleteScreen(
             stats = s.stats,
-            onContinue = viewModel::startSession,
+            onContinue = { viewModel.finish() },
             onDone = viewModel::finish,
         )
     }
