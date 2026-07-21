@@ -82,91 +82,91 @@ fun FlashcardScreen(
                 },
             ),
     ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // Progress pinned to the top (just below the status bar).
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            LinearProgressIndicator(
-                progress = { position.toFloat() / total },
-                modifier = Modifier.weight(1f).height(10.dp).clip(RoundedCornerShape(99.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = "$position/$total",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (sessionStreak > 0) {
-                Spacer(Modifier.width(12.dp))
-                AnimatedCounter(
-                    value = sessionStreak,
-                    prefix = "🔥 ",
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
-        }
-
-        // Card group centered in the remaining space.
         Column(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
-            CategoryPill(card.category)
-            Spacer(Modifier.height(20.dp))
-
-            // Slide the next card in from the right; resets the flip per card.
-            AnimatedContent(
-                targetState = card,
-                transitionSpec = {
-                    (slideInHorizontally { width -> width } + fadeIn()) togetherWith
-                        (slideOutHorizontally { width -> -width } + fadeOut())
-                },
-                label = "card",
-            ) { current ->
-                var isFlipped by remember(current.id) { mutableStateOf(false) }
-                var dragProgress by remember(current.id) { mutableFloatStateOf(0f) }
-                Box {
-                    FlipCard(
-                        front = current.front,
-                        reading = current.reading,
-                        meaning = current.back,
-                        isFlipped = isFlipped,
-                        onFlip = { isFlipped = !isFlipped },
-                        modifier = Modifier.swipeToDismissCard(
-                            enabled = isFlipped,
-                            onDismiss = { right -> onAnswer(right) },
-                            onDrag = { dragProgress = it },
-                        ),
+            // Progress pinned to the top (just below the status bar).
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                LinearProgressIndicator(
+                    progress = { position.toFloat() / total },
+                    modifier = Modifier.weight(1f).height(10.dp).clip(RoundedCornerShape(99.dp)),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = "$position/$total",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (sessionStreak > 0) {
+                    Spacer(Modifier.width(12.dp))
+                    AnimatedCounter(
+                        value = sessionStreak,
+                        prefix = "🔥 ",
+                        style = MaterialTheme.typography.labelMedium,
                     )
-                    SwipeIntentOverlay(progress = if (isFlipped) dragProgress else 0f)
                 }
             }
 
-            val audio = card.audio
-            if (!audio.isNullOrBlank()) {
+            // Card group centered in the remaining space.
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                CategoryPill(card.category)
                 Spacer(Modifier.height(20.dp))
-                BouncyButton(
-                    onClick = onPlayAudio,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                ) {
-                    Text("🔊  Listen")
-                }
-            }
 
-            Spacer(Modifier.height(28.dp))
-            AnswerButtons(onAnswer = onAnswer)
+                // Slide the next card in from the right; resets the flip per card.
+                AnimatedContent(
+                    targetState = card,
+                    transitionSpec = {
+                        (slideInHorizontally { width -> width } + fadeIn()) togetherWith
+                            (slideOutHorizontally { width -> -width } + fadeOut())
+                    },
+                    label = "card",
+                ) { current ->
+                    var isFlipped by remember(current.id) { mutableStateOf(false) }
+                    var dragProgress by remember(current.id) { mutableFloatStateOf(0f) }
+                    Box {
+                        FlipCard(
+                            front = current.front,
+                            reading = current.reading,
+                            meaning = current.back,
+                            isFlipped = isFlipped,
+                            onFlip = { isFlipped = !isFlipped },
+                            modifier = Modifier.swipeToDismissCard(
+                                enabled = isFlipped,
+                                onDismiss = { right -> onAnswer(right) },
+                                onDrag = { dragProgress = it },
+                            ),
+                        )
+                        SwipeIntentOverlay(progress = if (isFlipped) dragProgress else 0f)
+                    }
+                }
+
+                val audio = card.audio
+                if (!audio.isNullOrBlank()) {
+                    Spacer(Modifier.height(20.dp))
+                    BouncyButton(
+                        onClick = onPlayAudio,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    ) {
+                        Text("🔊  Listen")
+                    }
+                }
+
+                Spacer(Modifier.height(28.dp))
+                AnswerButtons(onAnswer = onAnswer)
+            }
         }
-    }
         ConfettiBurst(trigger = streakMilestone, modifier = Modifier.fillMaxSize())
     }
 }
