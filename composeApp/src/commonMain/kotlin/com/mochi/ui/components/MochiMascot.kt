@@ -19,8 +19,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
-private const val GREET_HOLD_MS = 1200L
-private const val REACT_HOLD_MS = 800L
+private const val GREET_HOLD_MS = 1800L
+private const val REACT_HOLD_MS = 1000L
 private const val TUCK_FACTOR = 1.4f // how far below its own height the mascot hides
 private const val HOP_PEAK = 1.18f // slight overshoot upward before it drops away
 private const val HOP_DURATION_MS = 160
