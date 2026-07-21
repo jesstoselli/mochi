@@ -1,6 +1,9 @@
 package com.mochi.ui.screens
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -47,6 +50,7 @@ import com.mochi.ui.motion.swipeToDismissCard
  * pronunciation, and reports ratings via [onAnswer]. The success celebration is shown once
  * at the end of the session (on the summary screen), not per card.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun FlashcardScreen(
     card: Flashcard,
@@ -56,6 +60,9 @@ fun FlashcardScreen(
     sessionStreak: Int,
     onAnswer: (Boolean) -> Unit,
     onPlayAudio: () -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
+    sharedKey: String,
     modifier: Modifier = Modifier,
 ) {
     // Auto-play the pronunciation each time a new card appears.
@@ -63,7 +70,18 @@ fun FlashcardScreen(
         onPlayAudio()
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .then(
+                with(sharedScope) {
+                    Modifier.sharedBounds(
+                        sharedContentState = rememberSharedContentState(key = sharedKey),
+                        animatedVisibilityScope = animatedScope,
+                    )
+                },
+            ),
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()

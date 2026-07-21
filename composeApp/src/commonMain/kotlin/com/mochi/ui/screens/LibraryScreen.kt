@@ -1,5 +1,8 @@
 package com.mochi.ui.screens
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,10 +34,13 @@ import com.mochi.ui.theme.LocalJapaneseFont
  * The Library: a grid of study units. Each unit shows its number, a sample kanji, a progress
  * label (learned/total) and a "due" badge. Tapping a unit opens its study session.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun LibraryScreen(
     units: List<UnitSummary>,
     onOpenUnit: (Int) -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp)) {
@@ -51,16 +57,38 @@ fun LibraryScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(units, key = { it.unitId }) { unit ->
-                UnitCard(unit = unit, onClick = { onOpenUnit(unit.unitId) })
+                UnitCard(
+                    unit = unit,
+                    onClick = { onOpenUnit(unit.unitId) },
+                    sharedScope = sharedScope,
+                    animatedScope = animatedScope,
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun UnitCard(unit: UnitSummary, onClick: () -> Unit) {
+private fun UnitCard(
+    unit: UnitSummary,
+    onClick: () -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
+) {
     Surface(
-        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .then(
+                with(sharedScope) {
+                    Modifier.sharedBounds(
+                        sharedContentState = rememberSharedContentState(key = "unit-${unit.unitId}"),
+                        animatedVisibilityScope = animatedScope,
+                    )
+                },
+            )
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         color = unitColor(unit.unitId),
         contentColor = MaterialTheme.colorScheme.onSurface,

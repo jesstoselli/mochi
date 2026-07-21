@@ -1,6 +1,8 @@
 package com.mochi
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -163,36 +165,51 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ReviewContent(
     state: ReviewUiState,
     units: List<UnitSummary>,
     viewModel: ReviewViewModel,
 ) {
-    when (val s = state) {
-        ReviewUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    SharedTransitionLayout(Modifier.fillMaxSize()) {
+        AnimatedContent(
+            targetState = state,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            contentKey = { it::class }, // animate only when the state TYPE changes
+            label = "reviewShared",
+        ) { s ->
+            when (s) {
+                ReviewUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+
+                ReviewUiState.Idle -> LibraryScreen(
+                    units = units,
+                    onOpenUnit = viewModel::openUnit,
+                    sharedScope = this@SharedTransitionLayout,
+                    animatedScope = this@AnimatedContent,
+                )
+
+                is ReviewUiState.Reviewing -> FlashcardScreen(
+                    card = s.card,
+                    position = s.position,
+                    total = s.total,
+                    streakMilestone = s.streakMilestone,
+                    sessionStreak = s.sessionStreak,
+                    onAnswer = viewModel::answer,
+                    onPlayAudio = viewModel::playCurrentAudio,
+                    sharedScope = this@SharedTransitionLayout,
+                    animatedScope = this@AnimatedContent,
+                    sharedKey = "unit-${viewModel.lastOpenedUnitId}",
+                )
+
+                is ReviewUiState.Complete -> SessionCompleteScreen(
+                    stats = s.stats,
+                    onContinue = viewModel::finish,
+                    onDone = viewModel::finish,
+                )
+            }
         }
-
-        ReviewUiState.Idle -> LibraryScreen(
-            units = units,
-            onOpenUnit = viewModel::openUnit,
-        )
-
-        is ReviewUiState.Reviewing -> FlashcardScreen(
-            card = s.card,
-            position = s.position,
-            total = s.total,
-            streakMilestone = s.streakMilestone,
-            sessionStreak = s.sessionStreak,
-            onAnswer = viewModel::answer,
-            onPlayAudio = viewModel::playCurrentAudio,
-        )
-
-        is ReviewUiState.Complete -> SessionCompleteScreen(
-            stats = s.stats,
-            onContinue = { viewModel.finish() },
-            onDone = viewModel::finish,
-        )
     }
 }
