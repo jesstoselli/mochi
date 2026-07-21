@@ -28,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,7 +39,6 @@ import com.mochi.db.Flashcard
 import com.mochi.ui.components.AnswerButtons
 import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.FlipCard
-import com.mochi.ui.components.SwipeIntentOverlay
 import com.mochi.ui.motion.AnimatedCounter
 import com.mochi.ui.motion.ConfettiBurst
 import com.mochi.ui.motion.swipeToDismissCard
@@ -131,22 +129,17 @@ fun FlashcardScreen(
                     label = "card",
                 ) { current ->
                     var isFlipped by remember(current.id) { mutableStateOf(false) }
-                    var dragProgress by remember(current.id) { mutableFloatStateOf(0f) }
-                    Box {
-                        FlipCard(
-                            front = current.front,
-                            reading = current.reading,
-                            meaning = current.back,
-                            isFlipped = isFlipped,
-                            onFlip = { isFlipped = !isFlipped },
-                            modifier = Modifier.swipeToDismissCard(
-                                enabled = isFlipped,
-                                onDismiss = { right -> onAnswer(right) },
-                                onDrag = { dragProgress = it },
-                            ),
-                        )
-                        SwipeIntentOverlay(progress = if (isFlipped) dragProgress else 0f)
-                    }
+                    FlipCard(
+                        front = current.front,
+                        reading = current.reading,
+                        meaning = current.back,
+                        isFlipped = isFlipped,
+                        onFlip = { isFlipped = !isFlipped },
+                        modifier = Modifier.swipeToDismissCard(
+                            enabled = isFlipped,
+                            onDismiss = { right -> onAnswer(right) },
+                        ),
+                    )
                 }
 
                 val audio = card.audio
