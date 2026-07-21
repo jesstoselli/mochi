@@ -24,6 +24,8 @@ kotlin {
         androidResources {
             enable = true
         }
+        @Suppress("UnstableApiUsage")
+        withHostTest {}
     }
 
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
