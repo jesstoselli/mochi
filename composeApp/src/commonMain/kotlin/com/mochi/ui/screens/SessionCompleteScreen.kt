@@ -1,6 +1,7 @@
 package com.mochi.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.mochi.ui.SessionStats
 import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.SuccessAnimation
+import com.mochi.ui.motion.ConfettiBurst
 
 /** Shown when a review session finishes: a quick recap plus what to do next. */
 @Composable
@@ -27,36 +29,39 @@ fun SessionCompleteScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        SuccessAnimation(modifier = Modifier.size(120.dp))
-        Spacer(Modifier.height(16.dp))
-
-        Text("Session complete!", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Reviewed ${stats.reviewed}  •  ${stats.correct} correct  •  ${stats.accuracyPercent}%",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(32.dp))
-
-        BouncyButton(onClick = onContinue) {
-            Text("Continue")
-        }
-        Spacer(Modifier.height(12.dp))
-        BouncyButton(
-            onClick = onDone,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ),
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Text("Done for now")
+            SuccessAnimation(modifier = Modifier.size(120.dp))
+            Spacer(Modifier.height(16.dp))
+
+            Text("Session complete!", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Reviewed ${stats.reviewed}  •  ${stats.correct} correct  •  ${stats.accuracyPercent}%",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(32.dp))
+
+            BouncyButton(onClick = onContinue) {
+                Text("Continue")
+            }
+            Spacer(Modifier.height(12.dp))
+            BouncyButton(
+                onClick = onDone,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
+            ) {
+                Text("Done for now")
+            }
         }
+        ConfettiBurst(trigger = Unit, modifier = Modifier.fillMaxSize())
     }
 }

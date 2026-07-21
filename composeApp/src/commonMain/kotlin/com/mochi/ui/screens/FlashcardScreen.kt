@@ -38,6 +38,7 @@ import com.mochi.ui.components.AnswerButtons
 import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.FlipCard
 import com.mochi.ui.components.SwipeIntentOverlay
+import com.mochi.ui.motion.ConfettiBurst
 import com.mochi.ui.motion.swipeToDismissCard
 
 /**
@@ -50,6 +51,7 @@ fun FlashcardScreen(
     card: Flashcard,
     position: Int,
     total: Int,
+    streakMilestone: Int?,
     onAnswer: (Boolean) -> Unit,
     onPlayAudio: () -> Unit,
     modifier: Modifier = Modifier,
@@ -59,8 +61,9 @@ fun FlashcardScreen(
         onPlayAudio()
     }
 
+    Box(modifier = modifier.fillMaxSize()) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -135,6 +138,8 @@ fun FlashcardScreen(
             Spacer(Modifier.height(28.dp))
             AnswerButtons(onAnswer = onAnswer)
         }
+    }
+        ConfettiBurst(trigger = streakMilestone, modifier = Modifier.fillMaxSize())
     }
 }
 
