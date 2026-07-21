@@ -22,7 +22,9 @@ import kotlinx.coroutines.delay
 private const val GREET_HOLD_MS = 1200L
 private const val REACT_HOLD_MS = 800L
 private const val TUCK_FACTOR = 1.4f // how far below its own height the mascot hides
-private const val OUT_DURATION_MS = 400
+private const val HOP_PEAK = 1.18f // slight overshoot upward before it drops away
+private const val HOP_DURATION_MS = 160
+private const val OUT_DURATION_MS = 380
 
 /**
  * The mochi as a Duolingo-style companion. It springs up from the bottom-left corner to greet
@@ -46,6 +48,8 @@ fun MochiMascot(
             animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         )
         delay(holdMs)
+        // Exit: a little hop up first, then drop down out of view.
+        reveal.animateTo(targetValue = HOP_PEAK, animationSpec = tween(durationMillis = HOP_DURATION_MS))
         reveal.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = OUT_DURATION_MS))
     }
 
@@ -62,7 +66,7 @@ fun MochiMascot(
                 .graphicsLayer {
                     val r = reveal.value
                     translationY = (1f - r) * size.height * TUCK_FACTOR
-                    alpha = r
+                    alpha = r.coerceIn(0f, 1f)
                 },
         )
     }
