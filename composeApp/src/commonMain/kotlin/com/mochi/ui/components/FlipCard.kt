@@ -3,7 +3,6 @@ package com.mochi.ui.components
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -23,9 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -37,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mochi.ui.theme.LocalJapaneseFont
+import kotlin.math.abs
 
 /**
  * Card that flips 180° on the Y axis to reveal the translation, and gives a soft
@@ -48,15 +46,16 @@ fun FlipCard(
     front: String,
     reading: String,
     meaning: String,
+    isFlipped: Boolean,
+    onFlip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var isFlipped by remember { mutableStateOf(false) }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
 
     val rotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = tween(durationMillis = 500),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
         label = "flipRotation",
     )
     val squish by animateFloatAsState(
@@ -74,8 +73,13 @@ fun FlipCard(
             .graphicsLayer {
                 rotationY = rotation
                 cameraDistance = 12f * density
+                // Lift the card as it turns; strongest edge-on at 90°.
+                val lift = 1f - abs(rotation - 90f) / 90f // 0 at faces, 1 at 90°
+                shadowElevation = 4.dp.toPx() + lift * 16.dp.toPx()
+                shape = RoundedCornerShape(32.dp)
+                clip = false
             }
-            .clickable(interactionSource = interaction, indication = null) { isFlipped = !isFlipped },
+            .clickable(interactionSource = interaction, indication = null) { onFlip() },
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),

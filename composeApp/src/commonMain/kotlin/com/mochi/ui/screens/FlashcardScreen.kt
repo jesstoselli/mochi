@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +37,8 @@ import com.mochi.db.Flashcard
 import com.mochi.ui.components.AnswerButtons
 import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.FlipCard
+import com.mochi.ui.components.SwipeIntentOverlay
+import com.mochi.ui.motion.swipeToDismissCard
 
 /**
  * Presentation-only review screen: renders the current [card] and progress, auto-plays its
@@ -91,11 +99,23 @@ fun FlashcardScreen(
                 },
                 label = "card",
             ) { current ->
-                FlipCard(
-                    front = current.front,
-                    reading = current.reading,
-                    meaning = current.back,
-                )
+                var isFlipped by remember(current.id) { mutableStateOf(false) }
+                var dragProgress by remember(current.id) { mutableFloatStateOf(0f) }
+                Box {
+                    FlipCard(
+                        front = current.front,
+                        reading = current.reading,
+                        meaning = current.back,
+                        isFlipped = isFlipped,
+                        onFlip = { isFlipped = !isFlipped },
+                        modifier = Modifier.swipeToDismissCard(
+                            enabled = isFlipped,
+                            onDismiss = { right -> onAnswer(right) },
+                            onDrag = { dragProgress = it },
+                        ),
+                    )
+                    SwipeIntentOverlay(progress = if (isFlipped) dragProgress else 0f)
+                }
             }
 
             val audio = card.audio
