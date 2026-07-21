@@ -1,6 +1,13 @@
 package com.mochi.library
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import com.mochi.db.AppDatabase
 import com.mochi.db.Flashcard
+import com.mochi.util.nowMillis
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** How many words make up one study unit. */
 const val UNIT_SIZE = 50
@@ -34,3 +41,12 @@ fun toUnitSummaries(cards: List<Flashcard>, now: Long): List<UnitSummary> =
             sampleFront = chunk.first().front,
         )
     }
+
+/** Reactive read model for the Library grid. Re-emits whenever card progress changes. */
+class LibraryStore(private val db: AppDatabase) {
+    /** All units, recomputed on every card change (selectAll is ordered by frequency ASC). */
+    fun units(): Flow<List<UnitSummary>> =
+        db.flashcardQueries.selectAll().asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { toUnitSummaries(it, nowMillis()) }
+}
