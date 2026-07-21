@@ -38,27 +38,45 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   callbacks out).
 - **DI via interfaces** so ViewModels are unit-testable with fakes: `ReviewDeck`,
   `NewCardCounter`, `NewCardLimitSource`, `ReminderScheduler`.
-- **Reactive data (SQLDelight Flow).** `LearningViewModel` and `StatsViewModel` expose
-  `StateFlow`s built from `query.asFlow().mapToList(Dispatchers.Default)` → `map` →
-  `stateIn(viewModelScope, WhileSubscribed(5s), initial)`. UI updates itself; no manual refresh.
-  `ReviewViewModel` is a state machine (Loading → Home → Reviewing → Complete), still driven
-  imperatively (it's a session, not a data view).
+- **Reactive data (SQLDelight Flow).** `LearningViewModel`, `StatsViewModel` and
+  `LibraryViewModel` expose `StateFlow`s built from `query.asFlow().mapToList(Dispatchers.Default)`
+  → `map` → `stateIn(viewModelScope, WhileSubscribed(5s), initial)`. UI updates itself; no manual
+  refresh. `ReviewViewModel` is a state machine (Loading → Idle → Reviewing → Complete), still
+  driven imperatively (it's a session, not a data view). `Idle` = the Library grid is shown.
+- **Library & per-unit sessions.** The Review tab's landing is the **Library**: a grid of 30
+  study **units** of 50 words, derived from frequency rank (no schema change — `LibraryStore`
+  chunks the frequency-ordered cards). Tapping a unit opens a session scoped to that unit
+  (`ReviewViewModel.openUnit(id)`): its due + new cards up to the remaining **global** daily
+  new-card limit; if nothing is scheduled it falls back to a practice drill of that unit.
+  Streak, Stats and the "Still learning" list stay **global** (not per-unit).
+- **Animations (all `commonMain`, pure Canvas/graphicsLayer).** Reusable, data-agnostic
+  modifiers/composables live in `com.mochi.ui.motion`: 3D flip (spring + mid-flip shadow) with
+  physics `swipeToDismissCard` (drag resistance before flip, elastic throw after), `ConfettiBurst`
+  particle system (fires on session complete + every 10-answer session streak), `LiquidProgress`
+  (sine-wave fill on unit cards), `AnimatedCounter` (odometer for streak/stats), `pressBounce`.
+  A `SharedTransitionLayout` morphs the tapped unit card into the study session.
 - **Persistence.** SQLDelight: `flashcard`, `app_setting` (key/value), `review_log`. Migrations
   are `*.sqm` files (`1.sqm`, `2.sqm`, `3.sqm`); the `.sq` `CREATE` statements are the current
   schema and must stay in sync with migrations. Schema version = migration count + 1.
-- **Drawn, not imported.** The mascot (`MochiLogo`) and success checkmark are pure Compose
-  `Canvas` vector drawing via `PathParser` — no image assets, identical on both platforms.
+- **Drawn, not imported.** The mascot (`MochiLogo`), success checkmark, confetti and liquid
+  progress are pure Compose `Canvas` — no image assets, identical on both platforms.
 
 ## Key packages (in composeApp/commonMain)
 
-- `com.mochi.App` — host + bottom nav + tab routing.
-- `com.mochi.review.ReviewViewModel` — SRS session state machine.
+- `com.mochi.App` — host + bottom nav + tab routing; wraps the Review tab in `SharedTransitionLayout`.
+- `com.mochi.review.{ReviewViewModel, ReviewUiState}` — SRS session state machine; `openUnit(id)`,
+  session-streak + `streakMilestone` signal, `lastOpenedUnitId` (drives the shared-element key).
+- `com.mochi.library.{LibraryStore, LibraryViewModel, UnitSummary}` — unit derivation
+  (`toUnitSummaries`, pure/tested) + reactive `units()` Flow. `UNIT_SIZE = 50`.
 - `com.mochi.learning.{LearningStore, LearningViewModel}` — "Still learning" list (reactive).
 - `com.mochi.stats.{StatsStore, StatsViewModel}` — streak/reviews/7-day chart (reactive).
 - `com.mochi.settings.{SettingsStore, SettingsViewModel, ThemeMode}` — prefs.
 - `com.mochi.reminder.{ReminderScheduler, ReminderTime}` — reminder contract (expect-like).
-- `com.mochi.data.{DeckRepository, DatabaseFactory, Seed}` — data layer.
-- `com.mochi.ui.screens.*` — Home, Flashcard, SessionComplete, Learning, Stats, Settings.
+- `com.mochi.data.{DeckRepository, DatabaseFactory, Seed}` — data layer; `ReviewDeck.cardsInUnit(id)`.
+- `com.mochi.ui.screens.*` — Library, Flashcard, SessionComplete, Learning, Stats, Settings
+  (Home was removed; the Library replaced it as the Review landing).
+- `com.mochi.ui.motion.*` — reusable animation building blocks: `swipeToDismissCard`, `pressBounce`,
+  `ConfettiBurst` (+`Particle`), `LiquidProgress`, `AnimatedCounter`.
 - `com.mochi.ui.components.*` — MochiLogo, FlipCard, AnswerButtons, BouncyButton, SuccessAnimation.
 - `com.mochi.ui.theme.*` — Mochi Box palette, typography (LocalJapaneseFont), shapes, SystemBars.
 
@@ -77,11 +95,17 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   (query `stillLearning` joins flashcard, latest row per card). A card leaves the list once its
   latest answer is correct. Because of in-session relearning, cards usually leave the list by the
   end of a session (last answer ends up correct).
-- **Practice ("Practice anyway")** logs answers with `practice = 1` (so the list updates and
-  relearning works) but does **not** reschedule the card and is **excluded** from streak/daily
-  stats/new-card limit (those queries filter `practice = 0`).
-- **Daily new-card limit** (10/20/30/Unlimited=0) caps new cards per day; the day's queue is due
-  reviews + new cards up to the remaining limit.
+- **Practice** logs answers with `practice = 1` (so the list updates and relearning works) but
+  does **not** reschedule the card and is **excluded** from streak/daily stats/new-card limit
+  (those queries filter `practice = 0`). A unit with nothing due opens as a practice drill.
+- **Daily new-card limit** (10/20/30/Unlimited=0) caps new cards per day. It stays **global**
+  even though sessions are per-unit: a unit's queue is its due reviews + its new cards up to the
+  **remaining** global allowance, so once the daily budget is spent a fresh unit shows reviews only.
+- **Session streak** (`ReviewViewModel`) counts consecutive correct answers, resets on a miss;
+  crossing a multiple of 10 sets `streakMilestone` on exactly one `Reviewing` emission → confetti.
+- **Units are derived, not stored.** Unit N = the cards ranked `[N*50, N*50+50)` by frequency.
+  `learnedCount` = cards with `next_review != null` (matches the "words learned" stat);
+  `dueCount` = cards with `next_review <= now` (new cards aren't counted as due but are still offered).
 
 ## Platform specifics
 
@@ -103,36 +127,68 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 - **App icon**: adaptive (cream bg + mochi foreground PNG per density) + legacy mipmaps; iOS
   `AppIcon.appiconset` 1024. Source SVG kept at `docs/icon/mochi.svg`.
 
-## UX touches added this session
+## Interactive animations (latest session)
 
-- Mascot on Home: taps above the title; bounces in on launch and again on tap (spring), with a
-  soft "pop" sound (`files/click.wav`) + haptic. Hiragana もち sits above "Mochi".
-- Haptics on all `BouncyButton`s and on Settings option rows (fires only on actual change).
-- Reminder settings: switch + Material 3 `TimePicker` dialog (24h).
+- **Library grid** (`LibraryScreen`): 30 unit cards, distinct pastel per unit, a `LiquidProgress`
+  wave fill for `learned/50`, and a "N due" badge. Confirmed working on device (user, both flows).
+- **Flashcard**: spring flip with a mid-flip shadow "lift"; `swipeToDismissCard` (drag resists +
+  springs back before flip, tilts and throws off-screen after flip → rates the card). Right = "I
+  knew it", left = "Still learning"; the on-screen `AnswerButtons` still work in parallel.
+  The intent-overlay pills were tried then **removed** (they cluttered the card during drag).
+- **Confetti** (`ConfettiBurst`): on session complete and on each 10-answer session streak.
+- **Odometer counters** (`AnimatedCounter`): Stats numbers and the in-session 🔥 streak HUD.
+- **Shared-element transition**: the tapped unit card expands into the session and contracts back.
+- Existing: haptics on `BouncyButton`s + Settings rows; reminder `TimePicker`.
 
 ## Conventions
 
 - **All app code + commit messages in English** (portfolio for international market). Chat is PT-BR.
 - **Commits are authored as** `Jessyca Toselli <toselli.jess@gmail.com>` (git history was rewritten
   earlier to fix author/committer; local git config set accordingly).
-- Keep ktlint/detekt clean: imports sorted (case-sensitive, uppercase before lowercase), lines
-  ≤120, detekt `MagicNumber` is off, `FunctionNaming` ignores `@Composable`.
+- **Commits: granular, one logical change each; never `git push` (user does that manually).**
+- **ktlint/detekt are green** (`./gradlew :composeApp:ktlintCheck :composeApp:detekt`). The repo
+  had pre-existing debt from ktlint 1.x's opinionated rules; those wrapping/signature rules are
+  **disabled in `.editorconfig`** (the codebase uses a compact style), generated code is excluded,
+  and detekt `LongMethod` ignores `@Composable`. Meaningful checks (indent, ≤120, trailing commas)
+  stay on. Imports sorted (case-sensitive, uppercase before lowercase).
+- **Tests:** `commonTest` runs on the JVM via `./gradlew :composeApp:testAndroidHostTest` (fast;
+  `withHostTest {}` is enabled) or on iOS-sim via `:allTests`. Compile check: `:compileAndroidMain`
+  (the `:compileDebugKotlinAndroid` task does NOT exist in this AGP-9 KMP-library module).
 - Screenshots referenced by README live in `docs/screenshots/` (not committed yet).
 
 ## Pending / follow-ups
 
-- **`git push --force`** is still pending to publish the rewritten commit history (author fix).
-  All work is committed locally; nothing pushed by the assistant.
-- **iOS build not yet verified on device** for: reminder (UserNotifications interop), and it still
-  has no audio and uses system fonts. Confirm it builds in Xcode.
-- **iOS audio** (NSData/AVAudioPlayer) and **iOS bundled fonts** remain deferred.
-- **Screenshots**: drop PNGs into `docs/screenshots/` (home, review, session-complete, learning,
-  stats, settings) — README already links them.
-- Possible niceties discussed but not done: shuffle the re-entry position of a missed last card;
-  make Stats reactive was done; a "Still learning (N)" card on Stats was declined.
+- **Push pending.** All work merged to `main` locally; `main` is ~21 commits ahead of `origin/main`
+  (includes the earlier author-fix history rewrite → needs `git push --force-with-lease origin main`).
+  Nothing pushed by the assistant.
+- **Mascot dropped from the Review landing.** The bouncing mochi + "pop" sound lived on the old
+  `HomeScreen`, which the Library replaced. If desired, re-home the mascot (e.g. a small tappable
+  `MochiLogo` in the Library header) to keep that delight.
+- **iOS**: common code compiles for iOS; animations are Compose-common so they render on both.
+  Still deferred: **iOS audio** (NSData/AVAudioPlayer) and **iOS bundled fonts** (uses system fonts).
+  Reminder (UserNotifications) still to confirm on a real device.
+- **Screenshots**: drop PNGs into `docs/screenshots/` (now: library, flashcard, session-complete,
+  learning, stats, settings) — README already links them.
+- Possible niceties: shuffle the re-entry position of a missed last card; a "Still learning (N)"
+  card on Stats was declined.
 
 ## Recent commits (latest first)
 
+- build: make ktlint/detekt green (relax opinionated rules, exclude generated)
+- feat: remove swipe intent overlay pills from the card
+- feat: shared-element transition from library unit to session
+- feat: odometer counters for stats and session streak
+- feat: add liquid sine-wave progress to unit cards
+- feat: celebrate session completion and 10-streaks with confetti
+- feat: add Canvas confetti particle system
+- feat: spring flip with dynamic shadow and physics swipe-to-rate
+- feat: add swipeToDismissCard physics gesture modifier
+- refactor: extract reusable Modifier.pressBounce
+- feat: replace Home with a unit Library grid on the Review tab
+- feat: scope review sessions to a unit and track session streak
+- feat: derive study units of 50 from frequency rank (+ LibraryStore/VM, cardsInUnit)
+- test: enable fast Android host tests for commonTest
+- docs: add interactive animations spec + implementation plan
 - Requeue missed cards within the session (Anki-style relearning)
 - Add configurable daily study reminder notification (Android + iOS)
 - Update README: still-learning list, mascot, reactivity, splash, haptics
