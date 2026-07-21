@@ -2,6 +2,7 @@ package com.mochi.data
 
 import com.mochi.db.AppDatabase
 import com.mochi.db.Flashcard
+import com.mochi.library.UNIT_SIZE
 import com.mochi.util.nowMillis
 import com.mochi.util.todayEpochDay
 
@@ -10,6 +11,9 @@ interface ReviewDeck {
     suspend fun ensureSeeded()
     fun due(now: Long): List<Flashcard>
     fun allCards(): List<Flashcard>
+
+    /** The 50 cards of the given study unit, by frequency rank (may be fewer in the last unit). */
+    fun cardsInUnit(unitId: Int): List<Flashcard>
 
     /** Records the answer and returns the card with its updated SRS state. */
     fun recordAnswer(card: Flashcard, correct: Boolean): Flashcard
@@ -34,6 +38,11 @@ class DeckRepository(private val db: AppDatabase) : ReviewDeck {
     /** Every card, regardless of schedule (used for free practice). */
     override fun allCards(): List<Flashcard> =
         db.flashcardQueries.selectAll().executeAsList()
+
+    override fun cardsInUnit(unitId: Int): List<Flashcard> =
+        db.flashcardQueries.selectAll().executeAsList()
+            .drop(unitId * UNIT_SIZE)
+            .take(UNIT_SIZE)
 
     /**
      * Records an answer: updates the card's schedule (simplified SM-2), writes a review-log
