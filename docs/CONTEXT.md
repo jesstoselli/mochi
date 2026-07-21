@@ -101,8 +101,10 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 - **Daily new-card limit** (10/20/30/Unlimited=0) caps new cards per day. It stays **global**
   even though sessions are per-unit: a unit's queue is its due reviews + its new cards up to the
   **remaining** global allowance, so once the daily budget is spent a fresh unit shows reviews only.
-- **Session streak** (`ReviewViewModel`) counts consecutive correct answers, resets on a miss;
-  crossing a multiple of 10 sets `streakMilestone` on exactly one `Reviewing` emission → confetti.
+- **Session streak vs milestone** (`ReviewViewModel`): `sessionStreak` = consecutive correct
+  answers, resets on a miss (the 🔥 combo in the HUD). Separately, `correctMilestone` is set on the
+  one `Reviewing` emission where the **cumulative** correct count crosses a multiple of 10
+  (a miss does NOT reset it) → drives the confetti + mascot cheer.
 - **Units are derived, not stored.** Unit N = the cards ranked `[N*50, N*50+50)` by frequency.
   `learnedCount` = cards with `next_review != null` (matches the "words learned" stat);
   `dueCount` = cards with `next_review <= now` (new cards aren't counted as due but are still offered).
@@ -135,12 +137,14 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   springs back before flip, tilts and throws off-screen after flip → rates the card). Right = "I
   knew it", left = "Still learning"; the on-screen `AnswerButtons` still work in parallel.
   The intent-overlay pills were tried then **removed** (they cluttered the card during drag).
-- **Confetti** (`ConfettiBurst`): on session complete and on each 10-answer session streak.
+- **Confetti** (`ConfettiBurst`): on session complete and every 10th correct answer in a session
+  (cumulative `correctMilestone`, not a consecutive streak — so it actually fires in real use).
 - **Odometer counters** (`AnimatedCounter`): Stats numbers and the in-session 🔥 streak HUD.
 - **Shared-element transition**: the tapped unit card expands into the session and contracts back.
 - **Mascot companion** (`MochiMascot` wrapping `MochiLogo`): Duolingo-style — springs up from the
-  bottom-left when a deck opens (per-session `greet` trigger + haptic), holds ~1.2s, tucks away;
-  pops back for a quick cheer on each streak milestone (`react = streakMilestone`, alongside confetti).
+  bottom-left when a deck opens (per-session `greet` trigger + haptic), holds ~1.2s, then hops up
+  and drops away; pops back for a quick cheer on each `correctMilestone` (every 10th correct
+  answer, alongside confetti).
 - Existing: haptics on `BouncyButton`s + Settings rows; reminder `TimePicker`.
 
 ## Conventions
