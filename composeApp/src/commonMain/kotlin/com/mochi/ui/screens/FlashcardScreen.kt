@@ -39,6 +39,7 @@ import com.mochi.db.Flashcard
 import com.mochi.ui.components.AnswerButtons
 import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.FlipCard
+import com.mochi.ui.components.MochiMascot
 import com.mochi.ui.motion.AnimatedCounter
 import com.mochi.ui.motion.ConfettiBurst
 import com.mochi.ui.motion.swipeToDismissCard
@@ -67,6 +68,9 @@ fun FlashcardScreen(
     LaunchedEffect(card.id) {
         onPlayAudio()
     }
+
+    // Stable per session mount, so the mascot greets once when the deck opens.
+    val greetTrigger = remember { Any() }
 
     Box(
         modifier = modifier
@@ -161,6 +165,7 @@ fun FlashcardScreen(
             }
         }
         ConfettiBurst(trigger = streakMilestone, modifier = Modifier.fillMaxSize())
+        MochiMascot(greet = greetTrigger, react = streakMilestone, modifier = Modifier.fillMaxSize())
     }
 }
 
