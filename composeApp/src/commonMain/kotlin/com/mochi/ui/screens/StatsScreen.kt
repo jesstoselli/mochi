@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mochi.stats.StatsUiState
+import com.mochi.ui.motion.AnimatedCounter
 
 /** Essential stats: streak, today's reviews, words learned, and a 7-day chart. */
 @Composable
@@ -36,9 +37,9 @@ fun StatsScreen(stats: StatsUiState, modifier: Modifier = Modifier) {
         Text("Statistics", style = MaterialTheme.typography.headlineSmall)
 
         val days = if (stats.streak == 1) "day" else "days"
-        StatCard(label = "Current streak", value = "🔥 ${stats.streak} $days")
-        StatCard(label = "Reviews today", value = "${stats.reviewsToday}")
-        StatCard(label = "Words learned", value = "${stats.totalLearned}")
+        AnimatedStatCard(label = "Current streak", value = stats.streak, prefix = "🔥 ", suffix = " $days")
+        AnimatedStatCard(label = "Reviews today", value = stats.reviewsToday.toInt())
+        AnimatedStatCard(label = "Words learned", value = stats.totalLearned.toInt())
 
         if (stats.last7Days.isNotEmpty()) {
             SevenDayChart(stats.last7Days)
@@ -47,7 +48,7 @@ fun StatsScreen(stats: StatsUiState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun StatCard(label: String, value: String) {
+private fun AnimatedStatCard(label: String, value: Int, prefix: String = "", suffix: String = "") {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -61,11 +62,14 @@ private fun StatCard(label: String, value: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(6.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+            AnimatedCounter(
+                value = value,
+                prefix = prefix,
+                suffix = suffix,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                ),
             )
         }
     }

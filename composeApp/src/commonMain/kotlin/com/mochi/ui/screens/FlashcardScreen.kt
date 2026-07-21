@@ -38,6 +38,7 @@ import com.mochi.ui.components.AnswerButtons
 import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.FlipCard
 import com.mochi.ui.components.SwipeIntentOverlay
+import com.mochi.ui.motion.AnimatedCounter
 import com.mochi.ui.motion.ConfettiBurst
 import com.mochi.ui.motion.swipeToDismissCard
 
@@ -52,6 +53,7 @@ fun FlashcardScreen(
     position: Int,
     total: Int,
     streakMilestone: Int?,
+    sessionStreak: Int,
     onAnswer: (Boolean) -> Unit,
     onPlayAudio: () -> Unit,
     modifier: Modifier = Modifier,
@@ -82,6 +84,14 @@ fun FlashcardScreen(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (sessionStreak > 0) {
+                Spacer(Modifier.width(12.dp))
+                AnimatedCounter(
+                    value = sessionStreak,
+                    prefix = "🔥 ",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
         }
 
         // Card group centered in the remaining space.
