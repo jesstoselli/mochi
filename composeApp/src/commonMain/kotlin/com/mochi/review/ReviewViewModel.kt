@@ -17,14 +17,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
-// Cards in a free-practice session (review regardless of schedule).
+// Cards drilled in a fallback practice session (schedule ignored).
 private const val PRACTICE_SIZE = 20
 
+// Confetti fires each time the session streak crosses a multiple of this.
+private const val STREAK_MILESTONE = 10
+
 /**
- * Owns the review flow as a state machine: Home -> Reviewing -> Complete -> Home.
- * A "session" is the Anki-style day queue: all due reviews plus new cards up to the
- * remaining daily limit. Missed cards go back to the end of the queue (relearning) until
- * answered correctly. Dependencies are interfaces so the flow can be unit-tested.
+ * Owns the review flow as a state machine: Idle -> Reviewing -> Complete -> Idle.
+ * A session is scoped to one study unit: that unit's due reviews plus new cards up to the
+ * remaining GLOBAL daily new-card limit. Missed cards requeue (relearning). If a unit has
+ * nothing scheduled, it falls back to a practice drill of that unit. Dependencies are
+ * interfaces so the flow is unit-testable.
  */
 @OptIn(ExperimentalResourceApi::class)
 class ReviewViewModel(
@@ -41,53 +45,57 @@ class ReviewViewModel(
     private var index = 0
     private var reviewed = 0
     private var correct = 0
+    private var sessionStreak = 0
 
-    // The new-card limit the current session was built with (to detect changes).
+    private var currentUnitId = 0
     private var sessionNewLimit = limitSource.newCardLimit()
-
-    // Free practice doesn't touch the schedule or stats — but it still logs the answer
-    // (flagged as practice) so the "Still learning" list stays current.
     private var practiceMode = false
+
+    /** The unit the current/most-recent session belongs to (drives the shared-element key). */
+    var lastOpenedUnitId: Int = 0
+        private set
 
     init {
         viewModelScope.launch {
             deck.ensureSeeded()
-            goHome()
+            _state.value = ReviewUiState.Idle
         }
     }
 
-    /** Shows the landing screen with the current count of cards ready to study. */
-    fun goHome() {
-        _state.value = ReviewUiState.Home(pending = buildQueue().size)
-    }
-
-    /** Starts (or restarts) a study session from the current day queue. */
-    fun startSession() {
-        practiceMode = false
+    /**
+     * Opens a study session for [unitId]: its scheduled queue if any, otherwise a practice drill
+     * of that unit (so tapping a fully-learned unit still does something satisfying).
+     */
+    fun openUnit(unitId: Int) {
+        lastOpenedUnitId = unitId
+        currentUnitId = unitId
         sessionNewLimit = limitSource.newCardLimit()
-        session = buildQueue()
-        if (session.isEmpty()) {
-            goHome()
-            return
+        val queue = buildUnitQueue(unitId)
+        if (queue.isEmpty()) {
+            startUnitPractice(unitId)
+        } else {
+            practiceMode = false
+            beginSession(queue)
         }
-        index = 0
-        reviewed = 0
-        correct = 0
-        emitReviewing()
     }
 
-    /** Free practice over a shuffled sample of all cards — ignores schedule, logs as practice. */
-    fun startPractice() {
+    private fun startUnitPractice(unitId: Int) {
         practiceMode = true
-        session = deck.allCards().shuffled().take(PRACTICE_SIZE)
-        if (session.isEmpty()) {
-            goHome()
-            return
+        val queue = deck.cardsInUnit(unitId).shuffled().take(PRACTICE_SIZE)
+        if (queue.isEmpty()) {
+            _state.value = ReviewUiState.Idle
+        } else {
+            beginSession(queue)
         }
+    }
+
+    private fun beginSession(queue: List<Flashcard>) {
+        session = queue
         index = 0
         reviewed = 0
         correct = 0
-        emitReviewing()
+        sessionStreak = 0
+        emitReviewing(milestone = null)
     }
 
     fun answer(isCorrect: Boolean) {
@@ -99,15 +107,18 @@ class ReviewViewModel(
             deck.recordAnswer(card, isCorrect)
         }
         reviewed++
+        var milestone: Int? = null
         if (isCorrect) {
             correct++
+            sessionStreak++
+            if (sessionStreak % STREAK_MILESTONE == 0) milestone = sessionStreak
         } else {
-            // Relearning: a missed card returns to the end of the queue until answered right.
-            session = session + updated
+            sessionStreak = 0
+            session = session + updated // relearning: requeue at the end
         }
         if (index < session.lastIndex) {
             index++
-            emitReviewing()
+            emitReviewing(milestone)
         } else {
             _state.value = ReviewUiState.Complete(SessionStats(reviewed = reviewed, correct = correct))
         }
@@ -121,38 +132,40 @@ class ReviewViewModel(
         }
     }
 
-    /** Ends the session (from the summary's "Done") and returns to Home. */
-    fun finish() = goHome()
+    /** Ends the session (from the summary's "Done") and returns to the Library. */
+    fun finish() {
+        _state.value = ReviewUiState.Idle
+    }
 
-    /**
-     * Called when the Review tab becomes visible: refresh the Home count, or rebuild the
-     * running session if the daily new-card limit changed (e.g. via Settings).
-     */
+    /** Called when the Review tab becomes visible: rebuild a running session if the limit changed. */
     fun onEnterReviewTab() {
-        when (state.value) {
-            is ReviewUiState.Home -> goHome()
-            is ReviewUiState.Reviewing -> if (limitSource.newCardLimit() != sessionNewLimit) startSession()
-            else -> Unit
+        val current = state.value
+        if (current is ReviewUiState.Reviewing && limitSource.newCardLimit() != sessionNewLimit) {
+            openUnit(currentUnitId)
         }
     }
 
-    /** The day's queue: due reviews first, then new cards up to the remaining daily limit. */
-    private fun buildQueue(): List<Flashcard> {
+    /** The unit's queue: its due reviews first, then its new cards up to the remaining daily limit. */
+    private fun buildUnitQueue(unitId: Int): List<Flashcard> {
         val limit = limitSource.newCardLimit()
         val remainingNew = if (limit <= 0) {
             Int.MAX_VALUE
         } else {
             (limit - newCardCounter.newOnDay(todayEpochDay()).toInt()).coerceAtLeast(0)
         }
-        val (newCards, reviews) = deck.due(nowMillis()).partition { it.next_review == null }
+        val now = nowMillis()
+        val due = deck.cardsInUnit(unitId).filter { it.next_review == null || it.next_review <= now }
+        val (newCards, reviews) = due.partition { it.next_review == null }
         return reviews + newCards.take(remainingNew)
     }
 
-    private fun emitReviewing() {
+    private fun emitReviewing(milestone: Int?) {
         _state.value = ReviewUiState.Reviewing(
             card = session[index],
             position = index + 1,
             total = session.size,
+            sessionStreak = sessionStreak,
+            streakMilestone = milestone,
         )
     }
 
