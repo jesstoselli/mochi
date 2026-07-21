@@ -1,10 +1,22 @@
 # detekt configuration. Builds upon the default rules (buildUponDefaultConfig = true),
 # overriding only what's noisy for a Compose UI project.
 
+complexity:
+  LongMethod:
+    # Compose UI functions are declarative and legitimately long; don't flag them.
+    ignoreAnnotated: ['Composable']
+
 naming:
   FunctionNaming:
     # @Composable functions are PascalCase by convention.
     ignoreAnnotated: ['Composable']
+  MatchingDeclarationName:
+    # Files here are named by concept (Seed.kt, DatabaseFactory.kt, ConfettiBurst.kt),
+    # not after a single top-level declaration.
+    active: false
+  InvalidPackageDeclaration:
+    # expect/actual platform files intentionally sit outside a package-mirroring folder.
+    active: false
 
 style:
   MagicNumber:

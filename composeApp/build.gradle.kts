@@ -84,6 +84,10 @@ sqldelight {
 ktlint {
     android.set(true)
     ignoreFailures.set(false)
+    filter {
+        // Never lint generated code (e.g. Compose resources' Res.kt).
+        exclude { it.file.path.contains("/generated/") }
+    }
 }
 
 detekt {

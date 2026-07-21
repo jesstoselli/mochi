@@ -43,15 +43,15 @@ class LibraryStoreTest {
         // 5 learned & not due (next_review=200>100), rest new (null, counted new not due).
         val cards = List(50) { i ->
             val nr = when {
-                i < 10 -> 50L      // learned, due now
-                i < 15 -> 200L     // learned, not due
-                else -> null       // new
+                i < 10 -> 50L // learned, due now
+                i < 15 -> 200L // learned, not due
+                else -> null // new
             }
             card(i.toLong(), nr)
         }
         val unit = toUnitSummaries(cards, now).single()
         assertEquals(15, unit.learnedCount) // next_review != null
-        assertEquals(10, unit.dueCount)     // next_review <= now
+        assertEquals(10, unit.dueCount) // next_review <= now
     }
 
     @Test

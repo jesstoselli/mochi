@@ -47,6 +47,7 @@ class StatsViewModel(private val statsStore: StatsStore) : ViewModel() {
     }
 
     /** Consecutive days with at least one review, ending today (or yesterday). */
+    @Suppress("ReturnCount") // Early returns keep the empty/broken-streak guards readable.
     private fun streakLength(daysDesc: List<Long>, today: Long): Int {
         if (daysDesc.isEmpty()) return 0
         val days = daysDesc.toHashSet()
