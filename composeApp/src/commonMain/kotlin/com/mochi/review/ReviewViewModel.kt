@@ -20,8 +20,8 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 // Cards drilled in a fallback practice session (schedule ignored).
 private const val PRACTICE_SIZE = 20
 
-// Confetti fires each time the session streak crosses a multiple of this.
-private const val STREAK_MILESTONE = 10
+// Confetti + mascot fire each time the session's correct-answer count crosses a multiple of this.
+private const val CORRECT_MILESTONE = 10
 
 /**
  * Owns the review flow as a state machine: Idle -> Reviewing -> Complete -> Idle.
@@ -111,7 +111,8 @@ class ReviewViewModel(
         if (isCorrect) {
             correct++
             sessionStreak++
-            if (sessionStreak % STREAK_MILESTONE == 0) milestone = sessionStreak
+            // Celebrate every Nth correct answer this session (cumulative, not consecutive).
+            if (correct % CORRECT_MILESTONE == 0) milestone = correct
         } else {
             sessionStreak = 0
             session = session + updated // relearning: requeue at the end
@@ -165,7 +166,7 @@ class ReviewViewModel(
             position = index + 1,
             total = session.size,
             sessionStreak = sessionStreak,
-            streakMilestone = milestone,
+            correctMilestone = milestone,
         )
     }
 

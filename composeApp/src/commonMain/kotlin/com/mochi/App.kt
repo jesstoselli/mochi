@@ -195,7 +195,7 @@ private fun ReviewContent(
                     card = s.card,
                     position = s.position,
                     total = s.total,
-                    streakMilestone = s.streakMilestone,
+                    correctMilestone = s.correctMilestone,
                     sessionStreak = s.sessionStreak,
                     onAnswer = viewModel::answer,
                     onPlayAudio = viewModel::playCurrentAudio,

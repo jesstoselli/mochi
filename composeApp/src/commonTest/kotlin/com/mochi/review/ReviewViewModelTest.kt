@@ -113,18 +113,29 @@ class ReviewViewModelTest {
     }
 
     @Test
-    fun streakMilestoneIsSignalledEveryTenThenClears() {
-        // 12 new cards so a Reviewing state still follows the streak-10 and streak-11 answers
-        // (with 11 cards the 11th correct answer would complete the session before we can assert).
-        val deck = FakeDeck(List(12) { card(it.toLong(), isNew = true) })
+    fun correctMilestoneIsSignalledEveryTenCorrectAnswersThenClears() {
+        // Plenty of cards so a Reviewing state still follows the 10th and 11th correct answers.
+        val deck = FakeDeck(List(14) { card(it.toLong(), isNew = true) })
         val vm = viewModel(deck, newToday = 0, limit = 20)
         vm.openUnit(0)
         repeat(9) { vm.answer(isCorrect = true) }
-        assertNull((vm.state.value as ReviewUiState.Reviewing).streakMilestone) // at streak 9
-        vm.answer(isCorrect = true) // streak hits 10
-        assertEquals(10, (vm.state.value as ReviewUiState.Reviewing).streakMilestone)
-        vm.answer(isCorrect = true) // streak 11 -> milestone clears
-        assertNull((vm.state.value as ReviewUiState.Reviewing).streakMilestone)
+        assertNull((vm.state.value as ReviewUiState.Reviewing).correctMilestone) // 9 correct
+        vm.answer(isCorrect = true) // 10th correct
+        assertEquals(10, (vm.state.value as ReviewUiState.Reviewing).correctMilestone)
+        vm.answer(isCorrect = true) // 11th correct -> milestone clears
+        assertNull((vm.state.value as ReviewUiState.Reviewing).correctMilestone)
+    }
+
+    @Test
+    fun milestoneCountsCumulativeCorrectAnswersDespiteAMiss() {
+        // A miss must NOT reset progress toward the milestone (it's cumulative, not a streak).
+        val deck = FakeDeck(List(15) { card(it.toLong(), isNew = true) })
+        val vm = viewModel(deck, newToday = 0, limit = 20)
+        vm.openUnit(0)
+        repeat(5) { vm.answer(isCorrect = true) } // 5 correct
+        vm.answer(isCorrect = false) // miss: resets the 🔥 streak, not the milestone count
+        repeat(5) { vm.answer(isCorrect = true) } // 5 more -> 10 correct total
+        assertEquals(10, (vm.state.value as ReviewUiState.Reviewing).correctMilestone)
     }
 
     @Test

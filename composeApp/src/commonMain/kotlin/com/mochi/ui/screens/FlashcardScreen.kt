@@ -55,7 +55,7 @@ fun FlashcardScreen(
     card: Flashcard,
     position: Int,
     total: Int,
-    streakMilestone: Int?,
+    correctMilestone: Int?,
     sessionStreak: Int,
     onAnswer: (Boolean) -> Unit,
     onPlayAudio: () -> Unit,
@@ -164,8 +164,8 @@ fun FlashcardScreen(
                 AnswerButtons(onAnswer = onAnswer)
             }
         }
-        ConfettiBurst(trigger = streakMilestone, modifier = Modifier.fillMaxSize())
-        MochiMascot(greet = greetTrigger, react = streakMilestone, modifier = Modifier.fillMaxSize())
+        ConfettiBurst(trigger = correctMilestone, modifier = Modifier.fillMaxSize())
+        MochiMascot(greet = greetTrigger, react = correctMilestone, modifier = Modifier.fillMaxSize())
     }
 }
 
