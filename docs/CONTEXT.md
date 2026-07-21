@@ -138,6 +138,9 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 - **Confetti** (`ConfettiBurst`): on session complete and on each 10-answer session streak.
 - **Odometer counters** (`AnimatedCounter`): Stats numbers and the in-session 🔥 streak HUD.
 - **Shared-element transition**: the tapped unit card expands into the session and contracts back.
+- **Mascot companion** (`MochiMascot` wrapping `MochiLogo`): Duolingo-style — springs up from the
+  bottom-left when a deck opens (per-session `greet` trigger + haptic), holds ~1.2s, tucks away;
+  pops back for a quick cheer on each streak milestone (`react = streakMilestone`, alongside confetti).
 - Existing: haptics on `BouncyButton`s + Settings rows; reminder `TimePicker`.
 
 ## Conventions
@@ -161,9 +164,9 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 - **Push pending.** All work merged to `main` locally; `main` is ~21 commits ahead of `origin/main`
   (includes the earlier author-fix history rewrite → needs `git push --force-with-lease origin main`).
   Nothing pushed by the assistant.
-- **Mascot dropped from the Review landing.** The bouncing mochi + "pop" sound lived on the old
-  `HomeScreen`, which the Library replaced. If desired, re-home the mascot (e.g. a small tappable
-  `MochiLogo` in the Library header) to keep that delight.
+- **Mascot** was re-homed as `MochiMascot`, a companion that greets on deck open + cheers on
+  streaks (see above). The greeting is haptic + visual only (no "pop" sound, to avoid clashing
+  with the auto-played pronunciation at session start); revisit if a sound is wanted.
 - **iOS**: common code compiles for iOS; animations are Compose-common so they render on both.
   Still deferred: **iOS audio** (NSData/AVAudioPlayer) and **iOS bundled fonts** (uses system fonts).
   Reminder (UserNotifications) still to confirm on a real device.
@@ -174,6 +177,7 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 
 ## Recent commits (latest first)
 
+- feat: mochi mascot greets on deck open and cheers on streaks
 - build: make ktlint/detekt green (relax opinionated rules, exclude generated)
 - feat: remove swipe intent overlay pills from the card
 - feat: shared-element transition from library unit to session
