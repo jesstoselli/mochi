@@ -16,9 +16,12 @@ fun Modifier.pressBounce(
     interactionSource: InteractionSource,
     pressedScale: Float = 0.9f,
 ): Modifier {
+    val policy = LocalMotionPolicy.current
+    if (!policy.allowSpatialMotion) return this
+
     val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) pressedScale else 1f,
+        targetValue = policy.pressScale(pressed, pressedScale),
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow,

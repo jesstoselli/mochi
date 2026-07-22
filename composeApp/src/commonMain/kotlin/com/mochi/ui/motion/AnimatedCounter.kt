@@ -2,6 +2,7 @@ package com.mochi.ui.motion
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -25,13 +26,18 @@ fun AnimatedCounter(
     suffix: String = "",
     style: TextStyle = LocalTextStyle.current,
 ) {
+    val policy = LocalMotionPolicy.current
     AnimatedContent(
         targetState = value,
         transitionSpec = {
-            val goingUp = targetState > initialState
-            val enter = slideInVertically { h -> if (goingUp) h else -h } + fadeIn()
-            val exit = slideOutVertically { h -> if (goingUp) -h else h } + fadeOut()
-            (enter togetherWith exit).using(SizeTransform(clip = false))
+            if (policy.reduced) {
+                fadeIn(tween(durationMillis = 120)) togetherWith fadeOut(tween(durationMillis = 120))
+            } else {
+                val goingUp = targetState > initialState
+                val enter = slideInVertically { h -> if (goingUp) h else -h } + fadeIn()
+                val exit = slideOutVertically { h -> if (goingUp) -h else h } + fadeOut()
+                (enter togetherWith exit).using(SizeTransform(clip = false))
+            }
         },
         modifier = modifier,
         label = "animatedCounter",

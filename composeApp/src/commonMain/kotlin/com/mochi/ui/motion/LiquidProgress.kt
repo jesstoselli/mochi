@@ -29,6 +29,30 @@ fun LiquidProgress(
     modifier: Modifier = Modifier,
     waveHeight: Float = 8f,
 ) {
+    val policy = LocalMotionPolicy.current
+    val phase = if (policy.allowInfiniteMotion) animatedLiquidPhase() else 0f
+    val amplitude = policy.waveAmplitude(waveHeight)
+
+    Canvas(modifier) {
+        val fill = progress.coerceIn(0f, 1f)
+        val baseY = size.height * (1f - fill)
+        val path = Path().apply {
+            moveTo(0f, size.height)
+            lineTo(0f, baseY)
+            for (i in 0..WAVE_STEPS) {
+                val x = size.width * i / WAVE_STEPS
+                val y = baseY + sin(phase + i.toFloat() / WAVE_STEPS * 2f * PI.toFloat()) * amplitude
+                lineTo(x, y)
+            }
+            lineTo(size.width, size.height)
+            close()
+        }
+        drawPath(path = path, color = color)
+    }
+}
+
+@Composable
+private fun animatedLiquidPhase(): Float {
     val transition = rememberInfiniteTransition(label = "liquid")
     val phase by transition.animateFloat(
         initialValue = 0f,
@@ -39,21 +63,5 @@ fun LiquidProgress(
         ),
         label = "wavePhase",
     )
-
-    Canvas(modifier) {
-        val fill = progress.coerceIn(0f, 1f)
-        val baseY = size.height * (1f - fill)
-        val path = Path().apply {
-            moveTo(0f, size.height)
-            lineTo(0f, baseY)
-            for (i in 0..WAVE_STEPS) {
-                val x = size.width * i / WAVE_STEPS
-                val y = baseY + sin(phase + i.toFloat() / WAVE_STEPS * 2f * PI.toFloat()) * waveHeight
-                lineTo(x, y)
-            }
-            lineTo(size.width, size.height)
-            close()
-        }
-        drawPath(path = path, color = color)
-    }
+    return phase
 }
