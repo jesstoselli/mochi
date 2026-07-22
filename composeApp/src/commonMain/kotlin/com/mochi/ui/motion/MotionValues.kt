@@ -1,5 +1,9 @@
 package com.mochi.ui.motion
 
+internal const val SHORT_FADE_DURATION_MS = 120
+internal const val SETTLE_DURATION_MS = 100
+private const val FULL_NAVIGATION_DURATION_MS = 300
+
 internal enum class SwipeRelease {
     THROW,
     FADE,
@@ -24,7 +28,8 @@ internal fun MotionPolicy.cardTilt(progress: Float, maxTilt: Float): Float =
 internal fun MotionPolicy.cardRotation(isFlipped: Boolean): Float =
     if (allowSpatialMotion && isFlipped) 180f else 0f
 
-internal fun MotionPolicy.navigationDurationMillis(): Int = if (reduced) 120 else 300
+internal fun MotionPolicy.navigationDurationMillis(): Int =
+    if (reduced) SHORT_FADE_DURATION_MS else FULL_NAVIGATION_DURATION_MS
 
 internal fun MotionPolicy.rewardPresentation(): RewardPresentation =
     if (allowDecorativeMotion) RewardPresentation.PARTICLES else RewardPresentation.STATIC

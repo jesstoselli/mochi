@@ -26,9 +26,9 @@ internal fun ReducedReward(trigger: Any?, modifier: Modifier = Modifier) {
     LaunchedEffect(trigger) {
         if (trigger == null) return@LaunchedEffect
         alpha.snapTo(0f)
-        alpha.animateTo(1f, tween(durationMillis = 120))
+        alpha.animateTo(1f, tween(durationMillis = SHORT_FADE_DURATION_MS))
         delay(700)
-        alpha.animateTo(0f, tween(durationMillis = 120))
+        alpha.animateTo(0f, tween(durationMillis = SHORT_FADE_DURATION_MS))
     }
 
     Canvas(modifier) {

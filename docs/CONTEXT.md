@@ -174,6 +174,10 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 - **Tests:** `commonTest` runs on the JVM via `./gradlew :composeApp:testAndroidHostTest` (fast;
   `withHostTest {}` is enabled) or via `:iosSimulatorArm64Test`. Compile check: `:compileAndroidMain`
   (the `:compileDebugKotlinAndroid` task does NOT exist in this AGP-9 KMP-library module).
+  A Compose UI test was attempted for Settings, but the plain Android host runner fails before
+  composition because Compose UI testing reads Android `Build` fields without Robolectric. The
+  implementation therefore uses pure presentation contracts plus Android/iOS compile and
+  simulator verification instead of adding a new Robolectric test stack.
 - Screenshots referenced by README live in `docs/screenshots/` (not committed yet).
 
 ## Pending / follow-ups

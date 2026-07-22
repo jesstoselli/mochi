@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -329,9 +332,9 @@ private fun ReminderToggleRow(enabled: Boolean, onChange: (Boolean) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 72.dp)
-            .clickable(role = Role.Switch) {
+            .toggleable(value = enabled, role = Role.Switch) { value ->
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                onChange(!enabled)
+                onChange(value)
             }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -349,7 +352,11 @@ private fun ReminderToggleRow(enabled: Boolean, onChange: (Boolean) -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Switch(checked = enabled, onCheckedChange = null)
+        Switch(
+            checked = enabled,
+            onCheckedChange = null,
+            modifier = Modifier.clearAndSetSemantics {},
+        )
     }
 }
 
@@ -394,17 +401,22 @@ private fun <T> ChoiceDialog(
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptics = LocalHapticFeedback.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
+            Column(Modifier.selectableGroup()) {
                 choices.forEach { choice ->
+                    val isSelected = choice.value == selected
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 56.dp)
-                            .clickable(role = Role.RadioButton) {
+                            .selectable(selected = isSelected, role = Role.RadioButton) {
+                                if (!isSelected) {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
                                 onSelect(choice.value)
                                 onDismiss()
                             }
@@ -412,7 +424,11 @@ private fun <T> ChoiceDialog(
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = choice.value == selected, onClick = null)
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = null,
+                            modifier = Modifier.clearAndSetSemantics {},
+                        )
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(choice.label, style = MaterialTheme.typography.bodyLarge)

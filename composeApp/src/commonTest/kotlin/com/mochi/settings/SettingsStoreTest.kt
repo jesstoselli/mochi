@@ -19,6 +19,13 @@ class SettingsStoreTest {
     }
 
     @Test
+    fun unreadableMotionPreferenceDefaultsToFull() {
+        val store = SettingsStore(ThrowingSettingValues())
+
+        assertEquals(MotionPreference.FULL, store.motionPreference())
+    }
+
+    @Test
     fun validMotionPreferenceIsRead() {
         val store = SettingsStore(FakeSettingValues(mutableMapOf("motion_preference" to "SYSTEM")))
 
@@ -34,6 +41,12 @@ class SettingsStoreTest {
 
         assertEquals("REDUCED", values.entries["motion_preference"])
     }
+}
+
+private class ThrowingSettingValues : SettingValues {
+    override fun read(key: String): String? = error("storage unavailable")
+
+    override fun write(key: String, value: String) = Unit
 }
 
 internal class FakeSettingValues(

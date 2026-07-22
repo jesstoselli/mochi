@@ -36,7 +36,11 @@ fun MochiMotionProvider(
     preference: MotionPreference,
     content: @Composable () -> Unit,
 ) {
-    val systemReduced = rememberSystemReducedMotion()
+    val systemReduced = if (preference == MotionPreference.SYSTEM) {
+        rememberSystemReducedMotion()
+    } else {
+        false
+    }
     val policy = remember(preference, systemReduced) {
         resolveMotionPolicy(preference, systemReduced)
     }

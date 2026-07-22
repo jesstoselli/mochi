@@ -96,13 +96,17 @@ fun MochiLogo(
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
-    val player = remember { AudioPlayer() }
+    val player = remember(interactive) { if (interactive) AudioPlayer() else null }
     var clickSound by remember { mutableStateOf<ByteArray?>(null) }
-    LaunchedEffect(Unit) {
-        clickSound = runCatching { Res.readBytes("files/click.wav") }.getOrNull()
+    LaunchedEffect(interactive) {
+        clickSound = if (interactive) {
+            runCatching { Res.readBytes("files/click.wav") }.getOrNull()
+        } else {
+            null
+        }
     }
     DisposableEffect(player) {
-        onDispose { player.release() }
+        onDispose { player?.release() }
     }
 
     suspend fun bounce() {
@@ -117,7 +121,7 @@ fun MochiLogo(
     }
     fun onTap() {
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-        clickSound?.let { player.play(it) }
+        clickSound?.let { player?.play(it) }
         if (motionPolicy.allowSpatialMotion) scope.launch { bounce() }
     }
     LaunchedEffect(animateEntry, motionPolicy.reduced) {

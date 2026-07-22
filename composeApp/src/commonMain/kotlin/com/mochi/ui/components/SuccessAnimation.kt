@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import com.mochi.ui.motion.LocalMotionPolicy
+import com.mochi.ui.motion.SHORT_FADE_DURATION_MS
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -51,7 +52,7 @@ fun SuccessAnimation(modifier: Modifier = Modifier) {
 
     LaunchedEffect(motionPolicy.reduced) {
         if (motionPolicy.reduced) {
-            alpha.animateTo(1f, tween(durationMillis = 120))
+            alpha.animateTo(1f, tween(durationMillis = SHORT_FADE_DURATION_MS))
         } else {
             launch {
                 circleScale.animateTo(

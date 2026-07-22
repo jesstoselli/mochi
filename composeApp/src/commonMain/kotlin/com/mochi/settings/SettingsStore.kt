@@ -39,10 +39,9 @@ class SettingsStore internal constructor(
         values.write(KEY_THEME, mode.name)
     }
 
-    fun motionPreference(): MotionPreference =
-        values.read(KEY_MOTION)
-            ?.let { runCatching { MotionPreference.valueOf(it) }.getOrNull() }
-            ?: MotionPreference.FULL
+    fun motionPreference(): MotionPreference = runCatching {
+        values.read(KEY_MOTION)?.let(MotionPreference::valueOf) ?: MotionPreference.FULL
+    }.getOrDefault(MotionPreference.FULL)
 
     fun setMotionPreference(preference: MotionPreference) {
         values.write(KEY_MOTION, preference.name)

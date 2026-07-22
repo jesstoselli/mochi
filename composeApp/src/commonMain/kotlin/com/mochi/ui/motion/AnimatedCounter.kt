@@ -31,7 +31,8 @@ fun AnimatedCounter(
         targetState = value,
         transitionSpec = {
             if (policy.reduced) {
-                fadeIn(tween(durationMillis = 120)) togetherWith fadeOut(tween(durationMillis = 120))
+                fadeIn(tween(durationMillis = SHORT_FADE_DURATION_MS)) togetherWith
+                    fadeOut(tween(durationMillis = SHORT_FADE_DURATION_MS))
             } else {
                 val goingUp = targetState > initialState
                 val enter = slideInVertically { h -> if (goingUp) h else -h } + fadeIn()

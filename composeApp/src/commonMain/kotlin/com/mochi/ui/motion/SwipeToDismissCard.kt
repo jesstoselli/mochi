@@ -18,6 +18,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -54,8 +55,9 @@ private const val THROW_DISTANCE = 1.6f
  * (drag is damped so it barely moves), the card springs back to center. [onDrag] reports the
  * horizontal progress in [-1f, 1f]. [onThresholdCrossed] fires once when the drag becomes eligible
  * for dismissal and rearms after the card returns below the threshold.
+ * Gesture callbacks and their exactly-once dismissal state intentionally share this lifecycle.
  */
-@Suppress("LongMethod") // Gesture callbacks share one lifecycle and state inside Modifier.composed.
+@Suppress("CyclomaticComplexMethod", "LongMethod")
 fun Modifier.swipeToDismissCard(
     enabled: Boolean,
     onDismiss: (right: Boolean) -> Unit,
@@ -69,15 +71,39 @@ fun Modifier.swipeToDismissCard(
     var widthPx by remember { mutableStateOf(1f) }
     var thresholdOutside by remember { mutableStateOf(false) }
     var isDismissing by remember { mutableStateOf(false) }
+    var releaseJob by remember { mutableStateOf<Job?>(null) }
+    var pendingDismissRight by remember { mutableStateOf<Boolean?>(null) }
+    var dismissalDelivered by remember { mutableStateOf(false) }
     val enabledState by rememberUpdatedState(enabled)
     val policyState by rememberUpdatedState(policy)
     val onDismissState by rememberUpdatedState(onDismiss)
     val onDragState by rememberUpdatedState(onDrag)
     val onThresholdCrossedState by rememberUpdatedState(onThresholdCrossed)
 
+    fun deliverDismiss(right: Boolean) {
+        if (!dismissalDelivered) {
+            dismissalDelivered = true
+            onDismissState(right)
+        }
+    }
+
     // Keep the overlay progress in sync with the current offset.
     LaunchedEffect(offset.value, widthPx) {
         onDragState((offset.value.x / widthPx).coerceIn(-1f, 1f))
+    }
+
+    LaunchedEffect(policy.reduced) {
+        if (policy.reduced && releaseJob?.isActive == true) {
+            releaseJob?.cancel()
+            val direction = pendingDismissRight
+            if (direction != null) {
+                alpha.animateTo(0f, animationSpec = tween(durationMillis = SHORT_FADE_DURATION_MS))
+                deliverDismiss(direction)
+            } else {
+                offset.animateTo(Offset.Zero, animationSpec = tween(durationMillis = SETTLE_DURATION_MS))
+                thresholdOutside = false
+            }
+        }
     }
 
     this
@@ -108,7 +134,9 @@ fun Modifier.swipeToDismissCard(
                         when (swipeRelease(passed = passed, reduced = policyState.reduced)) {
                             SwipeRelease.THROW -> {
                                 isDismissing = true
-                                scope.launch {
+                                pendingDismissRight = right
+                                dismissalDelivered = false
+                                releaseJob = scope.launch {
                                     offset.animateTo(
                                         targetValue = Offset(
                                             widthPx * THROW_DISTANCE * if (right) 1f else -1f,
@@ -116,25 +144,35 @@ fun Modifier.swipeToDismissCard(
                                         ),
                                         animationSpec = spring(stiffness = Spring.StiffnessLow),
                                     )
-                                    onDismissState(right)
+                                    deliverDismiss(right)
                                 }
                             }
                             SwipeRelease.FADE -> {
                                 isDismissing = true
-                                scope.launch {
-                                    alpha.animateTo(0f, animationSpec = tween(durationMillis = 120))
-                                    onDismissState(right)
+                                pendingDismissRight = right
+                                dismissalDelivered = false
+                                releaseJob = scope.launch {
+                                    alpha.animateTo(
+                                        0f,
+                                        animationSpec = tween(durationMillis = SHORT_FADE_DURATION_MS),
+                                    )
+                                    deliverDismiss(right)
                                 }
                             }
-                            SwipeRelease.SPRING -> scope.launch {
+                            SwipeRelease.SPRING -> releaseJob = scope.launch {
+                                pendingDismissRight = null
                                 offset.animateTo(
                                     targetValue = Offset.Zero,
                                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                                 )
                                 thresholdOutside = false
                             }
-                            SwipeRelease.SETTLE -> scope.launch {
-                                offset.animateTo(Offset.Zero, animationSpec = tween(durationMillis = 100))
+                            SwipeRelease.SETTLE -> releaseJob = scope.launch {
+                                pendingDismissRight = null
+                                offset.animateTo(
+                                    Offset.Zero,
+                                    animationSpec = tween(durationMillis = SETTLE_DURATION_MS),
+                                )
                                 thresholdOutside = false
                             }
                         }
@@ -142,9 +180,13 @@ fun Modifier.swipeToDismissCard(
                 },
                 onDragCancel = {
                     if (!isDismissing) {
-                        scope.launch {
+                        pendingDismissRight = null
+                        releaseJob = scope.launch {
                             if (policyState.reduced) {
-                                offset.animateTo(Offset.Zero, animationSpec = tween(durationMillis = 100))
+                                offset.animateTo(
+                                    Offset.Zero,
+                                    animationSpec = tween(durationMillis = SETTLE_DURATION_MS),
+                                )
                             } else {
                                 offset.animateTo(
                                     targetValue = Offset.Zero,

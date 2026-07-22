@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mochi.ui.motion.LocalMotionPolicy
+import com.mochi.ui.motion.SHORT_FADE_DURATION_MS
 import com.mochi.ui.motion.cardRotation
 import com.mochi.ui.motion.pressScale
 import com.mochi.ui.theme.LocalJapaneseFont
@@ -94,7 +95,7 @@ fun FlipCard(
             if (policy.reduced) {
                 Crossfade(
                     targetState = isFlipped,
-                    animationSpec = tween(durationMillis = 120),
+                    animationSpec = tween(durationMillis = SHORT_FADE_DURATION_MS),
                     label = "flipFade",
                 ) { showBack ->
                     FlipCardFace(front, reading, meaning, showBack)
