@@ -20,6 +20,7 @@ local.properties
 # Compose Multiplatform / KMP
 **/build/
 .kotlin/
+.worktrees/
 
 # iOS / Xcode
 xcuserdata/
