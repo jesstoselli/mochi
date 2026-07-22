@@ -13,7 +13,7 @@ assistant.
 
 ## 1. Reduced-motion accessibility
 
-- Add a Motion setting with `System`, `Full`, and `Reduced` modes; default to `System`.
+- Add a Motion setting with `System`, `Full`, and `Reduced` modes; default to `Full`.
 - Read the platform preference on Android and iOS when `System` is selected.
 - Centralize motion decisions in a shared policy instead of scattering preference checks.
 - Keep direct-manipulation gestures and haptics available.
