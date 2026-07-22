@@ -3,6 +3,7 @@ package com.mochi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -51,7 +52,9 @@ import com.mochi.settings.SettingsViewModel
 import com.mochi.settings.ThemeMode
 import com.mochi.stats.StatsStore
 import com.mochi.stats.StatsViewModel
+import com.mochi.ui.motion.LocalMotionPolicy
 import com.mochi.ui.motion.MochiMotionProvider
+import com.mochi.ui.motion.navigationDurationMillis
 import com.mochi.ui.screens.FlashcardScreen
 import com.mochi.ui.screens.LearningScreen
 import com.mochi.ui.screens.LibraryScreen
@@ -120,6 +123,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
 
     MochiTheme(darkTheme = darkTheme) {
         MochiMotionProvider(preference = motionPreference) {
+            val motionPolicy = LocalMotionPolicy.current
             SystemBarsEffect(darkTheme)
             Scaffold(
                 bottomBar = {
@@ -141,7 +145,10 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
                 ) {
                     AnimatedContent(
                         targetState = tab,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        transitionSpec = {
+                            val duration = motionPolicy.navigationDurationMillis()
+                            fadeIn(tween(duration)) togetherWith fadeOut(tween(duration))
+                        },
                         label = "tabs",
                     ) { current ->
                         when (current) {
@@ -178,10 +185,14 @@ private fun ReviewContent(
     units: List<UnitSummary>,
     viewModel: ReviewViewModel,
 ) {
+    val motionPolicy = LocalMotionPolicy.current
     SharedTransitionLayout(Modifier.fillMaxSize()) {
         AnimatedContent(
             targetState = state,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = {
+                val duration = motionPolicy.navigationDurationMillis()
+                fadeIn(tween(duration)) togetherWith fadeOut(tween(duration))
+            },
             contentKey = { it::class }, // animate only when the state TYPE changes
             label = "reviewShared",
         ) { s ->

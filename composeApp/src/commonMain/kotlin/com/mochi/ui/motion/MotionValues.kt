@@ -16,6 +16,11 @@ internal fun MotionPolicy.waveAmplitude(requested: Float): Float =
 internal fun MotionPolicy.cardTilt(progress: Float, maxTilt: Float): Float =
     if (allowSpatialMotion) progress.coerceIn(-1f, 1f) * maxTilt else 0f
 
+internal fun MotionPolicy.cardRotation(isFlipped: Boolean): Float =
+    if (allowSpatialMotion && isFlipped) 180f else 0f
+
+internal fun MotionPolicy.navigationDurationMillis(): Int = if (reduced) 120 else 300
+
 internal fun swipeRelease(passed: Boolean, reduced: Boolean): SwipeRelease = when {
     passed && reduced -> SwipeRelease.FADE
     passed -> SwipeRelease.THROW

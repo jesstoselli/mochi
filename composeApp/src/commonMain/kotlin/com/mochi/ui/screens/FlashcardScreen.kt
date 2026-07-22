@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -44,6 +45,8 @@ import com.mochi.ui.components.MochiMascot
 import com.mochi.ui.motion.AnimatedCounter
 import com.mochi.ui.motion.CardHaptics
 import com.mochi.ui.motion.ConfettiBurst
+import com.mochi.ui.motion.LocalMotionPolicy
+import com.mochi.ui.motion.navigationDurationMillis
 import com.mochi.ui.motion.swipeToDismissCard
 
 /**
@@ -66,6 +69,7 @@ fun FlashcardScreen(
     sharedKey: String,
     modifier: Modifier = Modifier,
 ) {
+    val motionPolicy = LocalMotionPolicy.current
     val hapticFeedback = LocalHapticFeedback.current
     val cardHaptics = remember(hapticFeedback) { CardHaptics(hapticFeedback::performHapticFeedback) }
 
@@ -81,11 +85,15 @@ fun FlashcardScreen(
         modifier = modifier
             .fillMaxSize()
             .then(
-                with(sharedScope) {
-                    Modifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = sharedKey),
-                        animatedVisibilityScope = animatedScope,
-                    )
+                if (motionPolicy.allowSpatialMotion) {
+                    with(sharedScope) {
+                        Modifier.sharedBounds(
+                            sharedContentState = rememberSharedContentState(key = sharedKey),
+                            animatedVisibilityScope = animatedScope,
+                        )
+                    }
+                } else {
+                    Modifier
                 },
             ),
     ) {
@@ -132,8 +140,13 @@ fun FlashcardScreen(
                 AnimatedContent(
                     targetState = card,
                     transitionSpec = {
-                        (slideInHorizontally { width -> width } + fadeIn()) togetherWith
-                            (slideOutHorizontally { width -> -width } + fadeOut())
+                        val duration = motionPolicy.navigationDurationMillis()
+                        if (motionPolicy.reduced) {
+                            fadeIn(tween(duration)) togetherWith fadeOut(tween(duration))
+                        } else {
+                            (slideInHorizontally { width -> width } + fadeIn()) togetherWith
+                                (slideOutHorizontally { width -> -width } + fadeOut())
+                        }
                     },
                     label = "card",
                 ) { current ->

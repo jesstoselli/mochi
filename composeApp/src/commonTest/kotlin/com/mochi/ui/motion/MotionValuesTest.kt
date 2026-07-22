@@ -23,6 +23,19 @@ class MotionValuesTest {
     }
 
     @Test
+    fun reducedFlipNeverRotatesInThreeDimensions() {
+        assertEquals(0f, MotionPolicy.Reduced.cardRotation(isFlipped = true))
+        assertEquals(180f, MotionPolicy.Full.cardRotation(isFlipped = true))
+        assertEquals(0f, MotionPolicy.Full.cardRotation(isFlipped = false))
+    }
+
+    @Test
+    fun reducedNavigationUsesShortFadeDuration() {
+        assertEquals(120, MotionPolicy.Reduced.navigationDurationMillis())
+        assertEquals(300, MotionPolicy.Full.navigationDurationMillis())
+    }
+
+    @Test
     fun swipeReleaseChoosesReducedAndFullPresentations() {
         assertEquals(SwipeRelease.FADE, swipeRelease(passed = true, reduced = true))
         assertEquals(SwipeRelease.THROW, swipeRelease(passed = true, reduced = false))

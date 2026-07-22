@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,11 +63,14 @@ fun Modifier.swipeToDismissCard(
     onDrag: (progress: Float) -> Unit = {},
 ): Modifier = composed {
     val offset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+    val alpha = remember { Animatable(1f) }
     val scope = rememberCoroutineScope()
+    val policy = LocalMotionPolicy.current
     var widthPx by remember { mutableStateOf(1f) }
     var thresholdOutside by remember { mutableStateOf(false) }
     var isDismissing by remember { mutableStateOf(false) }
     val enabledState by rememberUpdatedState(enabled)
+    val policyState by rememberUpdatedState(policy)
     val onDismissState by rememberUpdatedState(onDismiss)
     val onDragState by rememberUpdatedState(onDrag)
     val onThresholdCrossedState by rememberUpdatedState(onThresholdCrossed)
@@ -100,25 +104,37 @@ fun Modifier.swipeToDismissCard(
                 onDragEnd = {
                     if (!isDismissing) {
                         val passed = enabledState && abs(offset.value.x) > widthPx * DISMISS_THRESHOLD
-                        if (passed) {
-                            isDismissing = true
-                            val right = offset.value.x > 0
-                            scope.launch {
-                                offset.animateTo(
-                                    targetValue = Offset(
-                                        widthPx * THROW_DISTANCE * if (right) 1f else -1f,
-                                        offset.value.y,
-                                    ),
-                                    animationSpec = spring(stiffness = Spring.StiffnessLow),
-                                )
-                                onDismissState(right)
+                        val right = offset.value.x > 0
+                        when (swipeRelease(passed = passed, reduced = policyState.reduced)) {
+                            SwipeRelease.THROW -> {
+                                isDismissing = true
+                                scope.launch {
+                                    offset.animateTo(
+                                        targetValue = Offset(
+                                            widthPx * THROW_DISTANCE * if (right) 1f else -1f,
+                                            offset.value.y,
+                                        ),
+                                        animationSpec = spring(stiffness = Spring.StiffnessLow),
+                                    )
+                                    onDismissState(right)
+                                }
                             }
-                        } else {
-                            scope.launch {
+                            SwipeRelease.FADE -> {
+                                isDismissing = true
+                                scope.launch {
+                                    alpha.animateTo(0f, animationSpec = tween(durationMillis = 120))
+                                    onDismissState(right)
+                                }
+                            }
+                            SwipeRelease.SPRING -> scope.launch {
                                 offset.animateTo(
                                     targetValue = Offset.Zero,
                                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                                 )
+                                thresholdOutside = false
+                            }
+                            SwipeRelease.SETTLE -> scope.launch {
+                                offset.animateTo(Offset.Zero, animationSpec = tween(durationMillis = 100))
                                 thresholdOutside = false
                             }
                         }
@@ -127,10 +143,14 @@ fun Modifier.swipeToDismissCard(
                 onDragCancel = {
                     if (!isDismissing) {
                         scope.launch {
-                            offset.animateTo(
-                                targetValue = Offset.Zero,
-                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                            )
+                            if (policyState.reduced) {
+                                offset.animateTo(Offset.Zero, animationSpec = tween(durationMillis = 100))
+                            } else {
+                                offset.animateTo(
+                                    targetValue = Offset.Zero,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                )
+                            }
                             thresholdOutside = false
                         }
                     }
@@ -140,6 +160,7 @@ fun Modifier.swipeToDismissCard(
         .graphicsLayer {
             translationX = offset.value.x
             translationY = offset.value.y
-            rotationZ = (offset.value.x / widthPx).coerceIn(-1f, 1f) * MAX_TILT
+            rotationZ = policy.cardTilt(progress = offset.value.x / widthPx, maxTilt = MAX_TILT)
+            this.alpha = alpha.value
         }
 }

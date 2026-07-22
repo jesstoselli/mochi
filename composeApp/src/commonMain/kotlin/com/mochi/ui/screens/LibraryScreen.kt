@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mochi.library.UnitSummary
 import com.mochi.ui.motion.LiquidProgress
+import com.mochi.ui.motion.LocalMotionPolicy
 import com.mochi.ui.theme.LocalJapaneseFont
 
 /**
@@ -76,16 +77,21 @@ private fun UnitCard(
     sharedScope: SharedTransitionScope,
     animatedScope: AnimatedVisibilityScope,
 ) {
+    val motionPolicy = LocalMotionPolicy.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
             .then(
-                with(sharedScope) {
-                    Modifier.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "unit-${unit.unitId}"),
-                        animatedVisibilityScope = animatedScope,
-                    )
+                if (motionPolicy.allowSpatialMotion) {
+                    with(sharedScope) {
+                        Modifier.sharedBounds(
+                            sharedContentState = rememberSharedContentState(key = "unit-${unit.unitId}"),
+                            animatedVisibilityScope = animatedScope,
+                        )
+                    }
+                } else {
+                    Modifier
                 },
             )
             .clickable(onClick = onClick),
