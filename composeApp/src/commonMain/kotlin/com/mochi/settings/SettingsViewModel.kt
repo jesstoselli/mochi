@@ -16,6 +16,9 @@ class SettingsViewModel(
     private val _themeMode = MutableStateFlow(store.themeMode())
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
+    private val _motionPreference = MutableStateFlow(store.motionPreference())
+    val motionPreference: StateFlow<MotionPreference> = _motionPreference.asStateFlow()
+
     private val _newCardLimit = MutableStateFlow(store.newCardLimit())
     val newCardLimit: StateFlow<Int> = _newCardLimit.asStateFlow()
 
@@ -36,6 +39,11 @@ class SettingsViewModel(
     fun setThemeMode(mode: ThemeMode) {
         store.setThemeMode(mode)
         _themeMode.value = mode
+    }
+
+    fun setMotionPreference(preference: MotionPreference) {
+        store.setMotionPreference(preference)
+        _motionPreference.value = preference
     }
 
     fun setNewCardLimit(limit: Int) {

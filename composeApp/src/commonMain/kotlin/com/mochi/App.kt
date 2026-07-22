@@ -51,6 +51,7 @@ import com.mochi.settings.SettingsViewModel
 import com.mochi.settings.ThemeMode
 import com.mochi.stats.StatsStore
 import com.mochi.stats.StatsViewModel
+import com.mochi.ui.motion.MochiMotionProvider
 import com.mochi.ui.screens.FlashcardScreen
 import com.mochi.ui.screens.LearningScreen
 import com.mochi.ui.screens.LibraryScreen
@@ -90,6 +91,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
 
     val reviewState by reviewViewModel.state.collectAsState()
     val themeMode by settingsViewModel.themeMode.collectAsState()
+    val motionPreference by settingsViewModel.motionPreference.collectAsState()
     val newCardLimit by settingsViewModel.newCardLimit.collectAsState()
     val reminderEnabled by settingsViewModel.reminderEnabled.collectAsState()
     val reminderTime by settingsViewModel.reminderTime.collectAsState()
@@ -117,47 +119,51 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     }
 
     MochiTheme(darkTheme = darkTheme) {
-        SystemBarsEffect(darkTheme)
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    Tab.entries.forEach { destination ->
-                        NavigationBarItem(
-                            selected = tab == destination,
-                            onClick = { tab = destination },
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
-                            label = { Text(destination.label) },
-                        )
+        MochiMotionProvider(preference = motionPreference) {
+            SystemBarsEffect(darkTheme)
+            Scaffold(
+                bottomBar = {
+                    NavigationBar {
+                        Tab.entries.forEach { destination ->
+                            NavigationBarItem(
+                                selected = tab == destination,
+                                onClick = { tab = destination },
+                                icon = { Icon(destination.icon, contentDescription = destination.label) },
+                                label = { Text(destination.label) },
+                            )
+                        }
                     }
-                }
-            },
-        ) { innerPadding ->
-            Surface(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                color = MaterialTheme.colorScheme.background,
-            ) {
-                AnimatedContent(
-                    targetState = tab,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "tabs",
-                ) { current ->
-                    when (current) {
-                        Tab.REVIEW -> ReviewContent(reviewState, units, reviewViewModel)
-                        Tab.LEARNING -> LearningScreen(
-                            words = learningWords,
-                            onPlay = learningViewModel::play,
-                        )
-                        Tab.STATS -> StatsScreen(stats = stats)
-                        Tab.SETTINGS -> SettingsScreen(
-                            themeMode = themeMode,
-                            onThemeChange = settingsViewModel::setThemeMode,
-                            newCardLimit = newCardLimit,
-                            onNewCardLimitChange = settingsViewModel::setNewCardLimit,
-                            reminderEnabled = reminderEnabled,
-                            onReminderEnabledChange = settingsViewModel::setReminderEnabled,
-                            reminderTime = reminderTime,
-                            onReminderTimeChange = settingsViewModel::setReminderTime,
-                        )
+                },
+            ) { innerPadding ->
+                Surface(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    AnimatedContent(
+                        targetState = tab,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "tabs",
+                    ) { current ->
+                        when (current) {
+                            Tab.REVIEW -> ReviewContent(reviewState, units, reviewViewModel)
+                            Tab.LEARNING -> LearningScreen(
+                                words = learningWords,
+                                onPlay = learningViewModel::play,
+                            )
+                            Tab.STATS -> StatsScreen(stats = stats)
+                            Tab.SETTINGS -> SettingsScreen(
+                                themeMode = themeMode,
+                                onThemeChange = settingsViewModel::setThemeMode,
+                                motionPreference = motionPreference,
+                                onMotionPreferenceChange = settingsViewModel::setMotionPreference,
+                                newCardLimit = newCardLimit,
+                                onNewCardLimitChange = settingsViewModel::setNewCardLimit,
+                                reminderEnabled = reminderEnabled,
+                                onReminderEnabledChange = settingsViewModel::setReminderEnabled,
+                                reminderTime = reminderTime,
+                                onReminderTimeChange = settingsViewModel::setReminderTime,
+                            )
+                        }
                     }
                 }
             }

@@ -31,6 +31,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.mochi.reminder.ReminderTime
+import com.mochi.settings.MotionPreference
 import com.mochi.settings.ThemeMode
 
 private val NEW_CARD_OPTIONS = listOf(10 to "10", 20 to "20", 30 to "30", 0 to "Unlimited")
@@ -40,6 +41,8 @@ private val NEW_CARD_OPTIONS = listOf(10 to "10", 20 to "20", 30 to "30", 0 to "
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
+    motionPreference: MotionPreference,
+    onMotionPreferenceChange: (MotionPreference) -> Unit,
     newCardLimit: Int,
     onNewCardLimitChange: (Int) -> Unit,
     reminderEnabled: Boolean,
