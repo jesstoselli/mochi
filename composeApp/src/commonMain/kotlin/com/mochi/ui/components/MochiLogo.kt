@@ -85,7 +85,11 @@ private val Highlight = Color(0xFFFFFFFF)
  * When [animateEntry] is true it drops in and settles with a springy little bounce.
  */
 @Composable
-fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
+fun MochiLogo(
+    modifier: Modifier = Modifier,
+    animateEntry: Boolean = true,
+    interactive: Boolean = true,
+) {
     val drop = remember { Animatable(if (animateEntry) 1f else 0f) }
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
@@ -127,10 +131,16 @@ fun MochiLogo(modifier: Modifier = Modifier, animateEntry: Boolean = true) {
                 scaleX = popScale
                 scaleY = popScale
             }
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onTap() },
+            .then(
+                if (interactive) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onTap() }
+                } else {
+                    Modifier
+                },
+            ),
     ) {
         val s = size.minDimension / 64f
         scale(s, s, pivot = Offset.Zero) {
