@@ -65,7 +65,7 @@ fun Modifier.swipeToDismissCard(
     val scope = rememberCoroutineScope()
     var widthPx by remember { mutableStateOf(1f) }
     var thresholdOutside by remember { mutableStateOf(false) }
-    var isSettling by remember { mutableStateOf(false) }
+    var isDismissing by remember { mutableStateOf(false) }
     val enabledState by rememberUpdatedState(enabled)
     val onDismissState by rememberUpdatedState(onDismiss)
     val onDragState by rememberUpdatedState(onDrag)
@@ -82,7 +82,7 @@ fun Modifier.swipeToDismissCard(
             detectDragGestures(
                 onDrag = { change, dragAmount ->
                     change.consume()
-                    if (!isSettling) {
+                    if (!isDismissing) {
                         val factor = if (enabledState) 1f else LOCKED_RESISTANCE
                         val delta = Offset(dragAmount.x * factor, dragAmount.y * factor)
                         val threshold = updateSwipeThreshold(
@@ -98,10 +98,10 @@ fun Modifier.swipeToDismissCard(
                     }
                 },
                 onDragEnd = {
-                    if (!isSettling) {
-                        isSettling = true
+                    if (!isDismissing) {
                         val passed = enabledState && abs(offset.value.x) > widthPx * DISMISS_THRESHOLD
                         if (passed) {
+                            isDismissing = true
                             val right = offset.value.x > 0
                             scope.launch {
                                 offset.animateTo(
@@ -120,21 +120,18 @@ fun Modifier.swipeToDismissCard(
                                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                                 )
                                 thresholdOutside = false
-                                isSettling = false
                             }
                         }
                     }
                 },
                 onDragCancel = {
-                    if (!isSettling) {
-                        isSettling = true
+                    if (!isDismissing) {
                         scope.launch {
                             offset.animateTo(
                                 targetValue = Offset.Zero,
                                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                             )
                             thresholdOutside = false
-                            isSettling = false
                         }
                     }
                 },
