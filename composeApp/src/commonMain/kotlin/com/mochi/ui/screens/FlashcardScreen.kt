@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.mochi.db.Flashcard
 import com.mochi.ui.components.AnswerButtons
@@ -41,6 +42,7 @@ import com.mochi.ui.components.BouncyButton
 import com.mochi.ui.components.FlipCard
 import com.mochi.ui.components.MochiMascot
 import com.mochi.ui.motion.AnimatedCounter
+import com.mochi.ui.motion.CardHaptics
 import com.mochi.ui.motion.ConfettiBurst
 import com.mochi.ui.motion.swipeToDismissCard
 
@@ -64,6 +66,9 @@ fun FlashcardScreen(
     sharedKey: String,
     modifier: Modifier = Modifier,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val cardHaptics = remember(hapticFeedback) { CardHaptics(hapticFeedback::performHapticFeedback) }
+
     // Auto-play the pronunciation each time a new card appears.
     LaunchedEffect(card.id) {
         onPlayAudio()
@@ -138,10 +143,14 @@ fun FlashcardScreen(
                         reading = current.reading,
                         meaning = current.back,
                         isFlipped = isFlipped,
-                        onFlip = { isFlipped = !isFlipped },
+                        onFlip = {
+                            cardHaptics.onFlip()
+                            isFlipped = !isFlipped
+                        },
                         modifier = Modifier.swipeToDismissCard(
                             enabled = isFlipped,
                             onDismiss = { right -> onAnswer(right) },
+                            onThresholdCrossed = cardHaptics::onSwipeThreshold,
                         ),
                     )
                 }
