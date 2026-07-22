@@ -51,6 +51,9 @@ polished interaction, reusable motion primitives and production-minded KMP archi
   real-device validation on iOS.
 - **Mochi Box theme** — System, Light and Dark modes, themed system bars, haptics, bundled fonts
   on Android and a theme-aware Android 12+ splash screen.
+- **Motion accessibility** — choose Full, System or Reduced motion in the redesigned Settings
+  screen. Reduced mode keeps direct manipulation, haptics and short fades while removing 3D
+  rotation, spring bounce, continuous waves, moving particles and large shared transitions.
 
 ## Motion system
 
@@ -65,6 +68,10 @@ receive state and emit events; reusable motion building blocks include:
 - `AnimatedCounter` — vertical odometer transitions for changing values.
 - `MochiMascot` — a spring-driven greeting and milestone celebration.
 
+`MotionPolicy` is provided once at the app root. Full is the default, System follows Android's
+animator scale or iOS Reduce Motion, and Reduced selects calm variants without coupling screens to
+platform APIs. This keeps accessibility behavior consistent across every reusable primitive.
+
 ## Architecture
 
 - **MVVM with state hoisting** — screens are presentation-only; ViewModels own session and data
@@ -78,6 +85,8 @@ receive state and emit events; reusable motion building blocks include:
   implementations where required.
 - **Real persistence** — SQLDelight stores flashcards, settings and review history with migrations.
   The review log powers statistics, limits and the *Still learning* list.
+- **Centralized preferences** — theme, motion, daily new-card limit and reminders are hoisted from
+  `SettingsViewModel`; the grouped Settings cards only render state and emit changes.
 
 ## Tech stack
 
@@ -87,7 +96,8 @@ Kotlin Multiplatform · Compose Multiplatform · Material 3 · SQLDelight · Kot
 ## Quality
 
 - Unit tests cover unit derivation, per-unit queues, the global daily limit, in-session relearning,
-  cumulative per-session celebration milestones and particle physics.
+  cumulative per-session celebration milestones, particle physics, persisted motion preferences
+  and policy-selected reduced variants.
 - `commonTest` runs quickly on the JVM through the Android host-test target and can also run on
   the iOS simulator.
 - ktlint and detekt are enforced while preserving the project's intentionally compact Kotlin style.
@@ -97,6 +107,7 @@ Useful checks:
 
 ```bash
 ./gradlew :composeApp:testAndroidHostTest
+./gradlew :composeApp:iosSimulatorArm64Test
 ./gradlew :composeApp:ktlintCheck :composeApp:detekt
 ./gradlew :composeApp:compileAndroidMain
 ./gradlew :composeApp:compileKotlinIosSimulatorArm64

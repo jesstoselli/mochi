@@ -29,7 +29,7 @@ a "Still learning" list, theming, haptics, a mascot, a daily reminder, and a spl
 - `iosApp/` — the SwiftUI host with `iosApp.xcodeproj` (wizard-generated).
 
 Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expect`/`actual`
-(DriverFactory, AudioPlayer, fonts, system bars, reminder scheduler).
+(DriverFactory, AudioPlayer, fonts, system bars, reminder scheduler, system reduced-motion state).
 
 ## Architecture patterns
 
@@ -55,6 +55,10 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   particle system (fires on session complete + every 10-answer session streak), `LiquidProgress`
   (sine-wave fill on unit cards), `AnimatedCounter` (odometer for streak/stats), `pressBounce`.
   A `SharedTransitionLayout` morphs the tapped unit card into the study session.
+- **Motion accessibility.** `SettingsStore` persists `MotionPreference` (`FULL`, `SYSTEM`,
+  `REDUCED`; default `FULL`). `MochiMotionProvider` resolves it once and exposes a shared
+  `MotionPolicy`. Reduced mode preserves finger tracking, haptics and 120 ms fades while disabling
+  3D rotation, spring bounce, infinite waves, moving particles and shared-element expansion.
 - **Persistence.** SQLDelight: `flashcard`, `app_setting` (key/value), `review_log`. Migrations
   are `*.sqm` files (`1.sqm`, `2.sqm`, `3.sqm`); the `.sq` `CREATE` statements are the current
   schema and must stay in sync with migrations. Schema version = migration count + 1.
@@ -70,7 +74,7 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   (`toUnitSummaries`, pure/tested) + reactive `units()` Flow. `UNIT_SIZE = 50`.
 - `com.mochi.learning.{LearningStore, LearningViewModel}` — "Still learning" list (reactive).
 - `com.mochi.stats.{StatsStore, StatsViewModel}` — streak/reviews/7-day chart (reactive).
-- `com.mochi.settings.{SettingsStore, SettingsViewModel, ThemeMode}` — prefs.
+- `com.mochi.settings.{SettingsStore, SettingsViewModel, ThemeMode, MotionPreference}` — prefs.
 - `com.mochi.reminder.{ReminderScheduler, ReminderTime}` — reminder contract (expect-like).
 - `com.mochi.data.{DeckRepository, DatabaseFactory, Seed}` — data layer; `ReviewDeck.cardsInUnit(id)`.
 - `com.mochi.ui.screens.*` — Library, Flashcard, SessionComplete, Learning, Stats, Settings
@@ -128,6 +132,9 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   in MainActivity before `super.onCreate`.
 - **App icon**: adaptive (cream bg + mochi foreground PNG per density) + legacy mipmaps; iOS
   `AppIcon.appiconset` 1024. Source SVG kept at `docs/icon/mochi.svg`.
+- **System reduced motion**: Android observes `Settings.Global.ANIMATOR_DURATION_SCALE`; iOS
+  observes `UIAccessibilityIsReduceMotionEnabled` and its change notification. Platform errors
+  safely fall back to full motion when `System` is selected.
 
 ## Interactive animations (latest session)
 
@@ -142,9 +149,15 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 - **Odometer counters** (`AnimatedCounter`): Stats numbers and the in-session 🔥 streak HUD.
 - **Shared-element transition**: the tapped unit card expands into the session and contracts back.
 - **Mascot companion** (`MochiMascot` wrapping `MochiLogo`): Duolingo-style — springs up from the
-  bottom-left when a deck opens (per-session `greet` trigger + haptic), holds ~1.2s, then hops up
+  bottom-left when a deck opens (per-session `greet` trigger + haptic), holds ~1.8s, then hops up
   and drops away; pops back for a quick cheer on each `correctMilestone` (every 10th correct
   answer, alongside confetti).
+- **Reduced-motion variants**: the flip crossfades instead of rotating; swipe follows the finger
+  without tilt and fades/settles instead of throwing or bouncing; deck/card/tab transitions become
+  short fades; liquid progress is static; counters crossfade; rewards use fixed sparkles; Mochi
+  appears in place; completion renders the final badge without an expanding halo.
+- **Settings redesign**: grouped Mochi cards for Look & feel and Study rhythm, with focused dialogs
+  for Theme, Motion, new-card limit and reminder time. Reminder time is only shown when enabled.
 - Existing: haptics on `BouncyButton`s + Settings rows; reminder `TimePicker`.
 
 ## Conventions
@@ -159,28 +172,33 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   and detekt `LongMethod` ignores `@Composable`. Meaningful checks (indent, ≤120, trailing commas)
   stay on. Imports sorted (case-sensitive, uppercase before lowercase).
 - **Tests:** `commonTest` runs on the JVM via `./gradlew :composeApp:testAndroidHostTest` (fast;
-  `withHostTest {}` is enabled) or on iOS-sim via `:allTests`. Compile check: `:compileAndroidMain`
+  `withHostTest {}` is enabled) or via `:iosSimulatorArm64Test`. Compile check: `:compileAndroidMain`
   (the `:compileDebugKotlinAndroid` task does NOT exist in this AGP-9 KMP-library module).
 - Screenshots referenced by README live in `docs/screenshots/` (not committed yet).
 
 ## Pending / follow-ups
 
-- **Push pending.** All work merged to `main` locally; `main` is ~21 commits ahead of `origin/main`
-  (includes the earlier author-fix history rewrite → needs `git push --force-with-lease origin main`).
-  Nothing pushed by the assistant.
+- **Push pending.** All commits remain local. Nothing is pushed by the assistant.
 - **Mascot** was re-homed as `MochiMascot`, a companion that greets on deck open + cheers on
   streaks (see above). The greeting is haptic + visual only (no "pop" sound, to avoid clashing
   with the auto-played pronunciation at session start); revisit if a sound is wanted.
 - **iOS**: common code compiles for iOS; animations are Compose-common so they render on both.
   Still deferred: **iOS audio** (NSData/AVAudioPlayer) and **iOS bundled fonts** (uses system fonts).
   Reminder (UserNotifications) still to confirm on a real device.
-- **Screenshots**: drop PNGs into `docs/screenshots/` (now: library, flashcard, session-complete,
-  learning, stats, settings) — README already links them.
+- **README media**: keep exactly two slots — the Library and the study flow. Replace their files in
+  `docs/screenshots/` when final captures are ready.
 - Possible niceties: shuffle the re-entry position of a missed last card; a "Still learning (N)"
   card on Stats was declined.
 
 ## Recent commits (latest first)
 
+- feat: add reduced reward and mascot feedback
+- feat: reduce card and navigation motion
+- feat: add reduced variants for motion primitives
+- feat: redesign settings with grouped preference cards
+- feat: hoist effective motion settings
+- feat: resolve platform reduced motion preference
+- feat: persist motion preference
 - feat: mochi mascot greets on deck open and cheers on streaks
 - build: make ktlint/detekt green (relax opinionated rules, exclude generated)
 - feat: remove swipe intent overlay pills from the card

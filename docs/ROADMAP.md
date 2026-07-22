@@ -11,17 +11,16 @@ assistant.
 - 3D card flip, physics swipe, shared-element navigation, liquid progress, confetti, animated
   counters, and the Mochi session companion.
 
-## 1. Reduced-motion accessibility
+## 1. Reduced-motion accessibility — Complete
 
-- Add a Motion setting with `System`, `Full`, and `Reduced` modes; default to `Full`.
-- Read the platform preference on Android and iOS when `System` is selected.
-- Centralize motion decisions in a shared policy instead of scattering preference checks.
-- Keep direct-manipulation gestures and haptics available.
-- Replace large, continuous, or decorative motion with short fades, static states, or immediate
-  transitions in reduced mode.
-- Audit and test flip, swipe, shared elements, confetti, liquid progress, counters, press feedback,
-  tab transitions, and Mochi reactions.
-- Improve the Settings screen hierarchy while adding the new control.
+- Added `System`, `Full`, and `Reduced` modes with `Full` as the default.
+- `System` observes Android's animator duration scale and iOS Reduce Motion.
+- A shared `MotionPolicy` controls the complete animation system.
+- Direct-manipulation gestures and haptics remain available in every mode.
+- Reduced variants use short fades and static states for cards, shared elements, confetti, liquid
+  progress, counters, press feedback, navigation, the Mochi companion and session completion.
+- Settings now uses grouped preference cards with focused selection dialogs.
+- Android host tests, iOS simulator tests, Android/iOS compilation, ktlint and detekt pass.
 
 ## 2. iOS platform parity
 
