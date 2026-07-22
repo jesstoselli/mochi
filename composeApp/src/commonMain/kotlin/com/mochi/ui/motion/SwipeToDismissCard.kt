@@ -23,6 +23,23 @@ import kotlin.math.abs
 /** Fraction of card width the drag must pass to count as a dismissal. */
 private const val DISMISS_THRESHOLD = 0.35f
 
+internal data class SwipeThresholdUpdate(
+    val isOutside: Boolean,
+    val crossedNow: Boolean,
+)
+
+internal fun updateSwipeThreshold(
+    wasOutside: Boolean,
+    progress: Float,
+    enabled: Boolean,
+): SwipeThresholdUpdate {
+    val isOutside = enabled && abs(progress) > DISMISS_THRESHOLD
+    return SwipeThresholdUpdate(
+        isOutside = isOutside,
+        crossedNow = isOutside && !wasOutside,
+    )
+}
+
 /** Resistance applied to drags while [enabled] is false (card not yet flipped). */
 private const val LOCKED_RESISTANCE = 0.2f
 
@@ -34,19 +51,25 @@ private const val THROW_DISTANCE = 1.6f
  * Drag-to-rate gesture. When [enabled], dragging past [DISMISS_THRESHOLD] of the width throws the
  * card off-screen and calls [onDismiss] (right = true). Below the threshold, or while disabled
  * (drag is damped so it barely moves), the card springs back to center. [onDrag] reports the
- * horizontal progress in [-1f, 1f] so callers can render an intent overlay.
+ * horizontal progress in [-1f, 1f]. [onThresholdCrossed] fires once when the drag becomes eligible
+ * for dismissal and rearms after the card returns below the threshold.
  */
+@Suppress("LongMethod") // Gesture callbacks share one lifecycle and state inside Modifier.composed.
 fun Modifier.swipeToDismissCard(
     enabled: Boolean,
     onDismiss: (right: Boolean) -> Unit,
+    onThresholdCrossed: () -> Unit = {},
     onDrag: (progress: Float) -> Unit = {},
 ): Modifier = composed {
     val offset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
     val scope = rememberCoroutineScope()
     var widthPx by remember { mutableStateOf(1f) }
+    var thresholdOutside by remember { mutableStateOf(false) }
+    var isSettling by remember { mutableStateOf(false) }
     val enabledState by rememberUpdatedState(enabled)
     val onDismissState by rememberUpdatedState(onDismiss)
     val onDragState by rememberUpdatedState(onDrag)
+    val onThresholdCrossedState by rememberUpdatedState(onThresholdCrossed)
 
     // Keep the overlay progress in sync with the current offset.
     LaunchedEffect(offset.value, widthPx) {
@@ -59,28 +82,59 @@ fun Modifier.swipeToDismissCard(
             detectDragGestures(
                 onDrag = { change, dragAmount ->
                     change.consume()
-                    val factor = if (enabledState) 1f else LOCKED_RESISTANCE
-                    scope.launch {
-                        offset.snapTo(offset.value + Offset(dragAmount.x * factor, dragAmount.y * factor))
+                    if (!isSettling) {
+                        val factor = if (enabledState) 1f else LOCKED_RESISTANCE
+                        val delta = Offset(dragAmount.x * factor, dragAmount.y * factor)
+                        val threshold = updateSwipeThreshold(
+                            wasOutside = thresholdOutside,
+                            progress = (offset.value.x + delta.x) / widthPx,
+                            enabled = enabledState,
+                        )
+                        thresholdOutside = threshold.isOutside
+                        if (threshold.crossedNow) onThresholdCrossedState()
+                        scope.launch {
+                            offset.snapTo(offset.value + delta)
+                        }
                     }
                 },
                 onDragEnd = {
-                    val passed = enabledState && abs(offset.value.x) > widthPx * DISMISS_THRESHOLD
-                    if (passed) {
-                        val right = offset.value.x > 0
-                        scope.launch {
-                            offset.animateTo(
-                                targetValue = Offset(widthPx * THROW_DISTANCE * if (right) 1f else -1f, offset.value.y),
-                                animationSpec = spring(stiffness = Spring.StiffnessLow),
-                            )
-                            onDismissState(right)
+                    if (!isSettling) {
+                        isSettling = true
+                        val passed = enabledState && abs(offset.value.x) > widthPx * DISMISS_THRESHOLD
+                        if (passed) {
+                            val right = offset.value.x > 0
+                            scope.launch {
+                                offset.animateTo(
+                                    targetValue = Offset(
+                                        widthPx * THROW_DISTANCE * if (right) 1f else -1f,
+                                        offset.value.y,
+                                    ),
+                                    animationSpec = spring(stiffness = Spring.StiffnessLow),
+                                )
+                                onDismissState(right)
+                            }
+                        } else {
+                            scope.launch {
+                                offset.animateTo(
+                                    targetValue = Offset.Zero,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                )
+                                thresholdOutside = false
+                                isSettling = false
+                            }
                         }
-                    } else {
+                    }
+                },
+                onDragCancel = {
+                    if (!isSettling) {
+                        isSettling = true
                         scope.launch {
                             offset.animateTo(
                                 targetValue = Offset.Zero,
                                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                             )
+                            thresholdOutside = false
+                            isSettling = false
                         }
                     }
                 },
