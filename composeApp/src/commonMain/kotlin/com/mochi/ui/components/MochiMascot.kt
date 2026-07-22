@@ -21,7 +21,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.mochi.ui.motion.LocalMotionPolicy
+import com.mochi.ui.motion.MascotEvent
 import com.mochi.ui.motion.SHORT_FADE_DURATION_MS
+import com.mochi.ui.motion.nextMascotEvent
 import kotlinx.coroutines.delay
 
 private const val GREET_HOLD_MS = 1800L
@@ -46,8 +48,10 @@ fun MochiMascot(
     val motionPolicy = LocalMotionPolicy.current
     val reveal = remember { Animatable(0f) } // 0 = tucked below the edge, 1 = fully up
     val haptics = LocalHapticFeedback.current
-    var lastGreetTrigger by remember { mutableStateOf<Any?>(null) }
-    var lastReactTrigger by remember { mutableStateOf<Any?>(null) }
+    var startedGreet by remember { mutableStateOf<Any?>(null) }
+    var completedGreet by remember { mutableStateOf<Any?>(null) }
+    var startedReact by remember { mutableStateOf<Any?>(null) }
+    var completedReact by remember { mutableStateOf<Any?>(null) }
 
     suspend fun popUp(holdMs: Long, performHaptic: Boolean) {
         if (performHaptic) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -75,18 +79,22 @@ fun MochiMascot(
         }
     }
 
-    LaunchedEffect(greet, motionPolicy.reduced) {
-        if (greet != null) {
-            val performHaptic = greet != lastGreetTrigger
-            lastGreetTrigger = greet
-            popUp(GREET_HOLD_MS, performHaptic)
-        }
-    }
-    LaunchedEffect(react, motionPolicy.reduced) {
-        if (react != null) {
-            val performHaptic = react != lastReactTrigger
-            lastReactTrigger = react
-            popUp(REACT_HOLD_MS, performHaptic)
+    LaunchedEffect(greet, react, motionPolicy.reduced) {
+        when (nextMascotEvent(greet, completedGreet, react, completedReact)) {
+            MascotEvent.REACT -> {
+                completedGreet = greet
+                val performHaptic = react != startedReact
+                startedReact = react
+                popUp(REACT_HOLD_MS, performHaptic)
+                completedReact = react
+            }
+            MascotEvent.GREET -> {
+                val performHaptic = greet != startedGreet
+                startedGreet = greet
+                popUp(GREET_HOLD_MS, performHaptic)
+                completedGreet = greet
+            }
+            null -> Unit
         }
     }
 

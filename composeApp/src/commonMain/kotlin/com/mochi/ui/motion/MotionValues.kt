@@ -16,6 +16,11 @@ internal enum class RewardPresentation {
     STATIC,
 }
 
+internal enum class MascotEvent {
+    GREET,
+    REACT,
+}
+
 internal fun MotionPolicy.pressScale(pressed: Boolean, pressedScale: Float): Float =
     if (allowSpatialMotion && pressed) pressedScale else 1f
 
@@ -33,6 +38,17 @@ internal fun MotionPolicy.navigationDurationMillis(): Int =
 
 internal fun MotionPolicy.rewardPresentation(): RewardPresentation =
     if (allowDecorativeMotion) RewardPresentation.PARTICLES else RewardPresentation.STATIC
+
+internal fun nextMascotEvent(
+    greet: Any?,
+    completedGreet: Any?,
+    react: Any?,
+    completedReact: Any?,
+): MascotEvent? = when {
+    react != null && react != completedReact -> MascotEvent.REACT
+    greet != null && greet != completedGreet -> MascotEvent.GREET
+    else -> null
+}
 
 internal fun swipeRelease(passed: Boolean, reduced: Boolean): SwipeRelease = when {
     passed && reduced -> SwipeRelease.FADE

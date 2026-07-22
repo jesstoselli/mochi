@@ -42,6 +42,30 @@ class MotionValuesTest {
     }
 
     @Test
+    fun completedMascotEventsDoNotReplay() {
+        assertEquals(
+            null,
+            nextMascotEvent(greet = "session", completedGreet = "session", react = 10, completedReact = 10),
+        )
+    }
+
+    @Test
+    fun interruptedMascotEventRemainsPending() {
+        assertEquals(
+            MascotEvent.GREET,
+            nextMascotEvent(greet = "session", completedGreet = null, react = null, completedReact = null),
+        )
+    }
+
+    @Test
+    fun newMascotReactionTakesPriorityOverGreeting() {
+        assertEquals(
+            MascotEvent.REACT,
+            nextMascotEvent(greet = "session", completedGreet = null, react = 10, completedReact = null),
+        )
+    }
+
+    @Test
     fun swipeReleaseChoosesReducedAndFullPresentations() {
         assertEquals(SwipeRelease.FADE, swipeRelease(passed = true, reduced = true))
         assertEquals(SwipeRelease.THROW, swipeRelease(passed = true, reduced = false))
