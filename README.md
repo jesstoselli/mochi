@@ -1,96 +1,118 @@
 # Mochi — Japanese Flashcards
 
-A Duolingo-inspired flashcard app for studying Japanese, built with **Compose Multiplatform**
-(Android + iOS) around the **Kaishi 1.5k** deck (1500 words). It started as a playground for
-**native animations** (flip + spring) and grew into a small but complete Anki-style study app:
-spaced repetition, pronunciation audio, a "still learning" word list, live stats/streaks, a
-daily new-card limit, theming, haptics, a playful tappable mascot and a theme-aware splash —
-one shared Kotlin codebase across both platforms, with a four-tab bottom-nav layout
-(Review · Learning · Stats · Settings).
+Mochi is a Duolingo-inspired Japanese study app built with **Compose Multiplatform** for
+Android and iOS. It turns the **Kaishi 1.5k** deck into 30 progressive study units and combines
+Anki-style spaced repetition with tactile gestures, shared-element navigation, Canvas effects,
+audio, statistics, reminders and a playful mochi companion — all from one shared Kotlin codebase.
 
-> Looking to build and run it? See **[SETUP.md](SETUP.md)**.
+The project started as an animation playground and evolved into a portfolio app focused on
+polished interaction, reusable motion primitives and production-minded KMP architecture.
 
-## Screenshots
+> Want to build and run it? See **[SETUP.md](SETUP.md)**.
 
-> Drop a PNG for each screen into `docs/screenshots/` and the images below render
-> automatically. (Android shown; light + dark are both supported.)
+## Preview
 
-### Home
+### Library and unit progress
 
-![Home](docs/screenshots/home.png)
-<!-- Mascot (taps to bounce) + もち/Mochi, how many cards are ready, "Start studying" / "Practice anyway". -->
+![Mochi library](docs/screenshots/library.png)
 
-### Review (flashcard)
+<!-- Slot 1: library screenshot or short GIF showing the 30-unit grid and liquid progress. -->
 
-![Review](docs/screenshots/review.png)
-<!-- Progress bar, category pill, flip card (auto-sizing JP text), Listen button, answer buttons. -->
+### Study flow and interactions
 
-### Session complete
+![Mochi study flow](docs/screenshots/study-flow.gif)
 
-![Session complete](docs/screenshots/session-complete.png)
-<!-- End-of-session Canvas checkmark celebration + Continue / Done. -->
-
-### Still learning
-
-![Still learning](docs/screenshots/learning.png)
-<!-- Words whose latest answer was "Still learning": Japanese word + meaning, tap to hear it. -->
-
-### Stats
-
-![Stats](docs/screenshots/stats.png)
-<!-- Streak, reviews today, words learned + 7-day bar chart. -->
-
-### Settings
-
-![Settings](docs/screenshots/settings.png)
-<!-- Theme (System/Light/Dark) + new cards per day (10/20/30/Unlimited). -->
+<!-- Slot 2: screenshot, GIF or video thumbnail showing shared transition, flip, swipe and mascot. -->
 
 ## Features
 
-- **Anki-style spaced repetition** — each session is the day's queue: due reviews plus new
-  cards up to a configurable daily limit, scheduled with a simplified SM-2 algorithm.
-- **Flip cards with native animations** — spring-bounced flip, animated card-to-card
-  transitions, a press "squish", and auto-sizing text so Japanese never overflows.
-- **"Still learning" list** — words whose most recent answer was *Still learning* collect on
-  their own tab (Japanese word + meaning, tap to hear it) so you can revisit them anytime; a
-  word drops off once you answer *I knew it* — and free practice counts too.
-- **Pronunciation audio** — tap *Listen* to hear each word (Android; iOS pending).
-- **Stats & streaks** — current streak, reviews today, words learned, and a 7-day bar chart,
-  all derived from a review log.
-- **Live updates** — the stats and the "still learning" list are reactive: they refresh
-  themselves the moment you answer a card, no manual reload.
-- **Playful mascot** — a Canvas-drawn mochi that bounces in on launch and again on tap, with a
-  soft "pop" sound and haptic feedback.
-- **Tactile feel** — haptic feedback on buttons and settings, plus a theme-aware splash screen
-  (Android 12+) so a dark-mode launch never flashes white.
-- **Theming** — System / Light / Dark, with themed native system bars in dark mode.
-- **End-of-session celebration** — a checkmark drawn entirely on a Compose Canvas (no Lottie,
-  no assets), so it renders identically on both platforms.
+- **30 progressive study units** — the 1,500 Kaishi words are grouped into units of 50 by
+  frequency rank, each with learned progress and cards-due information.
+- **Per-unit study sessions** — choose a unit and review its due cards plus new cards, while a
+  configurable daily new-card limit remains global across the app.
+- **Anki-style spaced repetition** — a simplified SM-2 scheduler adjusts intervals and ease;
+  missed cards return to the end of the current queue until answered correctly.
+- **Tactile 3D flashcards** — cards flip with spring physics, perspective and dynamic shadow.
+  After revealing the answer, swipe right for *I knew it* or left for *Still learning*; short
+  drags return elastically to the center. On-screen answer buttons remain available.
+- **Continuous navigation** — a shared-element transition expands the selected unit card into
+  the study session and contracts it back into the library.
+- **Native Canvas rewards** — confetti celebrates session completion and every 10th cumulative
+  correct answer within a session, while a hand-drawn mochi companion greets the learner and
+  returns for those milestones.
+- **Organic progress and counters** — unit cards use animated sine-wave liquid progress;
+  statistics and the in-session streak use odometer-style number transitions.
+- **Still learning list** — words whose latest answer was incorrect are collected in their own
+  tab and disappear after a correct answer. Tapping a word plays its pronunciation.
+- **Live statistics** — current daily streak, reviews today, words learned and a seven-day chart
+  update reactively from SQLDelight flows.
+- **Audio and reminders** — pronunciation playback on Android and configurable daily study
+  reminders on Android and iOS. iOS pronunciation audio is pending, and reminders still await
+  real-device validation on iOS.
+- **Mochi Box theme** — System, Light and Dark modes, themed system bars, haptics, bundled fonts
+  on Android and a theme-aware Android 12+ splash screen.
+
+## Motion system
+
+Animation code lives in shared `commonMain` code and is independent of persistence. Platform
+capabilities such as haptics and audio are accessed through Compose or KMP abstractions. Screens
+receive state and emit events; reusable motion building blocks include:
+
+- `swipeToDismissCard` — drag resistance, tilt and spring dismissal/return.
+- `pressBounce` — consistent press-scale feedback for interactive controls.
+- `ConfettiBurst` — frame-driven Canvas particles with velocity, gravity and fading alpha.
+- `LiquidProgress` — an infinitely animated sine-wave fill drawn with `Path`.
+- `AnimatedCounter` — vertical odometer transitions for changing values.
+- `MochiMascot` — a spring-driven greeting and milestone celebration.
+
+## Architecture
+
+- **MVVM with state hoisting** — screens are presentation-only; ViewModels own session and data
+  state while interfaces keep dependencies replaceable in tests.
+- **Review state machine** — `Loading → Idle → Reviewing → Complete`, with the Library displayed
+  while idle and sessions opened by unit ID.
+- **Reactive SQLDelight data** — Library, Learning and Stats queries are observed as `Flow` and
+  exposed as `StateFlow`, so the UI updates without polling or manual refresh.
+- **Shared UI, focused platform code** — Compose screens, gestures, animations and business logic
+  live in `commonMain`; database drivers, audio, fonts, system bars and reminders use platform
+  implementations where required.
+- **Real persistence** — SQLDelight stores flashcards, settings and review history with migrations.
+  The review log powers statistics, limits and the *Still learning* list.
 
 ## Tech stack
 
-Kotlin Multiplatform · Compose Multiplatform · Material 3 · SQLDelight (reactive Flows) ·
-`androidx.lifecycle` ViewModel (MVVM) · Kotlin coroutines/Flow · kotlinx.serialization ·
-core-splashscreen · ktlint + detekt.
+Kotlin Multiplatform · Compose Multiplatform · Material 3 · SQLDelight · Kotlin coroutines/Flow ·
+`androidx.lifecycle` ViewModel · kotlinx.serialization · Android core-splashscreen · ktlint · detekt
 
-## Highlights
+## Quality
 
-- **One shared UI** for Android and iOS via Compose Multiplatform, with `expect`/`actual` only
-  where the platform differs (database driver, audio, fonts, system bars).
-- **MVVM** — the study flow lives in a single `ReviewViewModel` state machine; screens are
-  presentation-only (data in, callbacks out) and `App` is a thin host that routes tabs.
-- **Reactive data layer** — SQLDelight queries are observed as Flows (`asFlow().mapToList`) and
-  exposed as `StateFlow` via `stateIn`, so the UI reflects the database without polling or
-  manual refresh.
-- **Real persistence** — SQLDelight schema with migrations for cards, settings, and a review
-  log that powers stats, the daily new-card limit and the "still learning" list.
-- **Drawn, not imported** — the mascot and the success checkmark are pure Compose `Canvas`
-  vector drawing (via `PathParser`), so there are no image assets to ship and they render
-  identically on both platforms.
-- **Tested** — `ReviewViewModel` is unit-tested with fakes (interfaces for the deck, counters
-  and limits) using `kotlinx-coroutines-test`.
+- Unit tests cover unit derivation, per-unit queues, the global daily limit, in-session relearning,
+  cumulative per-session celebration milestones and particle physics.
+- `commonTest` runs quickly on the JVM through the Android host-test target and can also run on
+  the iOS simulator.
+- ktlint and detekt are enforced while preserving the project's intentionally compact Kotlin style.
+- Shared code is compile-checked for both Android and iOS.
+
+Useful checks:
+
+```bash
+./gradlew :composeApp:testAndroidHostTest
+./gradlew :composeApp:ktlintCheck :composeApp:detekt
+./gradlew :composeApp:compileAndroidMain
+./gradlew :composeApp:compileKotlinIosSimulatorArm64
+```
+
+## Project structure
+
+```text
+composeApp/   Shared KMP library: UI, data, ViewModels, motion and iOS framework
+androidApp/   Android application entry points, notifications and platform resources
+iosApp/       SwiftUI host application
+docs/         Setup, technical context, design specs and media
+```
 
 ## Credits
 
-Cards from the open-source **Kaishi 1.5k** Anki deck. Fonts: **Nunito** and **Zen Maru Gothic**
-(both OFL). Built as a portfolio project to explore Compose Multiplatform.
+Cards come from the open-source **Kaishi 1.5k** Anki deck. Fonts are **Nunito** and
+**Zen Maru Gothic** (OFL). Mochi is a portfolio project for exploring tactile interaction,
+animation systems and Compose Multiplatform architecture.
