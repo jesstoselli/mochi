@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import com.mochi.ui.motion.LocalMotionPolicy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -38,33 +40,39 @@ private val CheckP2 = Offset(196.1f, 248.0f)
  */
 @Composable
 fun SuccessAnimation(modifier: Modifier = Modifier) {
-    val circleScale = remember { Animatable(0f) }
-    val ringProgress = remember { Animatable(0f) }
-    val checkProgress = remember { Animatable(0f) }
+    val motionPolicy = LocalMotionPolicy.current
+    val circleScale = remember(motionPolicy.reduced) { Animatable(if (motionPolicy.reduced) 1f else 0f) }
+    val ringProgress = remember(motionPolicy.reduced) { Animatable(if (motionPolicy.reduced) 1f else 0f) }
+    val checkProgress = remember(motionPolicy.reduced) { Animatable(if (motionPolicy.reduced) 1f else 0f) }
+    val alpha = remember(motionPolicy.reduced) { Animatable(if (motionPolicy.reduced) 0f else 1f) }
 
     val circleColor = MaterialTheme.colorScheme.primary
     val checkColor = MaterialTheme.colorScheme.onPrimary
 
-    LaunchedEffect(Unit) {
-        launch {
-            circleScale.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            )
-        }
-        launch {
-            ringProgress.animateTo(1f, tween(durationMillis = 900, easing = FastOutSlowInEasing))
-        }
-        launch {
-            delay(timeMillis = 180)
-            checkProgress.animateTo(1f, tween(durationMillis = 360, easing = FastOutSlowInEasing))
+    LaunchedEffect(motionPolicy.reduced) {
+        if (motionPolicy.reduced) {
+            alpha.animateTo(1f, tween(durationMillis = 120))
+        } else {
+            launch {
+                circleScale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                )
+            }
+            launch {
+                ringProgress.animateTo(1f, tween(durationMillis = 900, easing = FastOutSlowInEasing))
+            }
+            launch {
+                delay(timeMillis = 180)
+                checkProgress.animateTo(1f, tween(durationMillis = 360, easing = FastOutSlowInEasing))
+            }
         }
     }
 
-    Canvas(modifier) {
+    Canvas(modifier.graphicsLayer { this.alpha = alpha.value }) {
         val unit = size.minDimension / DESIGN
         val center = Offset(size.width / 2f, size.height / 2f)
         fun design(p: Offset) = Offset(

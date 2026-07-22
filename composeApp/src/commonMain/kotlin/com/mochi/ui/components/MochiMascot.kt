@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import com.mochi.ui.motion.LocalMotionPolicy
 import kotlinx.coroutines.delay
 
 private const val GREET_HOLD_MS = 1800L
@@ -38,19 +39,31 @@ fun MochiMascot(
     react: Any?,
     modifier: Modifier = Modifier,
 ) {
+    val motionPolicy = LocalMotionPolicy.current
     val reveal = remember { Animatable(0f) } // 0 = tucked below the edge, 1 = fully up
     val haptics = LocalHapticFeedback.current
 
     suspend fun popUp(holdMs: Long) {
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-        reveal.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        )
+        if (motionPolicy.reduced) {
+            reveal.snapTo(0f)
+            reveal.animateTo(1f, animationSpec = tween(durationMillis = 120))
+        } else {
+            reveal.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow,
+                ),
+            )
+        }
         delay(holdMs)
-        // Exit: a little hop up first, then drop down out of view.
-        reveal.animateTo(targetValue = HOP_PEAK, animationSpec = tween(durationMillis = HOP_DURATION_MS))
-        reveal.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = OUT_DURATION_MS))
+        if (motionPolicy.reduced) {
+            reveal.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 120))
+        } else {
+            reveal.animateTo(targetValue = HOP_PEAK, animationSpec = tween(durationMillis = HOP_DURATION_MS))
+            reveal.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = OUT_DURATION_MS))
+        }
     }
 
     LaunchedEffect(greet) { if (greet != null) popUp(GREET_HOLD_MS) }
@@ -65,7 +78,11 @@ fun MochiMascot(
                 .size(88.dp)
                 .graphicsLayer {
                     val r = reveal.value
-                    translationY = (1f - r) * size.height * TUCK_FACTOR
+                    translationY = if (motionPolicy.allowSpatialMotion) {
+                        (1f - r) * size.height * TUCK_FACTOR
+                    } else {
+                        0f
+                    }
                     alpha = r.coerceIn(0f, 1f)
                 },
         )

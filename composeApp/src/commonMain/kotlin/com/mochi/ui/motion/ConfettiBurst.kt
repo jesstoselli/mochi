@@ -65,6 +65,14 @@ private val ConfettiColors = listOf(
  */
 @Composable
 fun ConfettiBurst(trigger: Any?, modifier: Modifier = Modifier) {
+    when (LocalMotionPolicy.current.rewardPresentation()) {
+        RewardPresentation.PARTICLES -> ParticleConfettiBurst(trigger, modifier)
+        RewardPresentation.STATIC -> ReducedReward(trigger, modifier)
+    }
+}
+
+@Composable
+private fun ParticleConfettiBurst(trigger: Any?, modifier: Modifier = Modifier) {
     var particles by remember { mutableStateOf(emptyList<Particle>()) }
 
     LaunchedEffect(trigger) {

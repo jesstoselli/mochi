@@ -32,6 +32,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.mochi.audio.AudioPlayer
 import com.mochi.resources.Res
+import com.mochi.ui.motion.LocalMotionPolicy
 import com.mochi.ui.theme.Kurogoma
 import com.mochi.ui.theme.MatchaSoft
 import com.mochi.ui.theme.RiceFlour
@@ -90,7 +91,8 @@ fun MochiLogo(
     animateEntry: Boolean = true,
     interactive: Boolean = true,
 ) {
-    val drop = remember { Animatable(if (animateEntry) 1f else 0f) }
+    val motionPolicy = LocalMotionPolicy.current
+    val drop = remember { Animatable(if (animateEntry && motionPolicy.allowSpatialMotion) 1f else 0f) }
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
@@ -116,18 +118,21 @@ fun MochiLogo(
     fun onTap() {
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         clickSound?.let { player.play(it) }
-        scope.launch { bounce() }
+        if (motionPolicy.allowSpatialMotion) scope.launch { bounce() }
     }
-    LaunchedEffect(animateEntry) {
-        if (animateEntry) bounce()
+    LaunchedEffect(animateEntry, motionPolicy.reduced) {
+        if (motionPolicy.reduced) {
+            drop.snapTo(0f)
+        } else if (animateEntry) {
+            bounce()
+        }
     }
     Canvas(
         modifier
             .graphicsLayer {
-                // drop = 1 lifts the mochi up and shrinks it slightly; the bouncy spring
-                // overshoots past 0, so it lands with a small bounce before resting.
-                translationY = drop.value * -size.height * 0.35f
-                val popScale = 1f - drop.value * 0.18f
+                val activeDrop = if (motionPolicy.allowSpatialMotion) drop.value else 0f
+                translationY = activeDrop * -size.height * 0.35f
+                val popScale = 1f - activeDrop * 0.18f
                 scaleX = popScale
                 scaleY = popScale
             }

@@ -36,6 +36,12 @@ class MotionValuesTest {
     }
 
     @Test
+    fun reducedRewardsUseStaticPresentation() {
+        assertEquals(RewardPresentation.STATIC, MotionPolicy.Reduced.rewardPresentation())
+        assertEquals(RewardPresentation.PARTICLES, MotionPolicy.Full.rewardPresentation())
+    }
+
+    @Test
     fun swipeReleaseChoosesReducedAndFullPresentations() {
         assertEquals(SwipeRelease.FADE, swipeRelease(passed = true, reduced = true))
         assertEquals(SwipeRelease.THROW, swipeRelease(passed = true, reduced = false))
