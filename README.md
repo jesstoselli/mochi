@@ -12,17 +12,21 @@ polished interaction, reusable motion primitives and production-minded KMP archi
 
 ## Preview
 
-### Library and unit progress
+<table>
+  <thead>
+    <tr>
+      <th>Android</th>
+      <th>iOS</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><video src="https://github.com/user-attachments/assets/7de0c6a2-a97d-472d-a6e2-8698b250daa6" width=250 /></td>
+      <td><video src="https://github.com/user-attachments/assets/cedd6ae7-75e5-4e77-be50-e9b57b887673" width=250 /></td>
+    </tr>
+  </tbody>
+</table>
 
-![Mochi library](docs/screenshots/library.png)
-
-<!-- Slot 1: library screenshot or short GIF showing the 30-unit grid and liquid progress. -->
-
-### Study flow and interactions
-
-![Mochi study flow](docs/screenshots/study-flow.gif)
-
-<!-- Slot 2: screenshot, GIF or video thumbnail showing shared transition, flip, swipe and mascot. -->
 
 ## Features
 
