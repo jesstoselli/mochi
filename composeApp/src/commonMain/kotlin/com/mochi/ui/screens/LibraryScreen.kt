@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -26,7 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mochi.goal.DailyGoalState
 import com.mochi.library.UnitSummary
+import com.mochi.ui.components.DailyGoalRing
 import com.mochi.ui.motion.LiquidProgress
 import com.mochi.ui.motion.LocalMotionPolicy
 import com.mochi.ui.theme.LocalJapaneseFont
@@ -39,18 +43,30 @@ import com.mochi.ui.theme.LocalJapaneseFont
 @Composable
 fun LibraryScreen(
     units: List<UnitSummary>,
+    dailyGoal: DailyGoalState,
     onOpenUnit: (Int) -> Unit,
     sharedScope: SharedTransitionScope,
     animatedScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp)) {
-        Text("Library", style = MaterialTheme.typography.headlineSmall)
-        Text(
-            text = "${units.size} units • tap to study",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text("Library", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    text = "${units.size} units • tap to study",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            DailyGoalRing(
+                reviewsToday = dailyGoal.reviewsToday,
+                goal = dailyGoal.goal,
+                progress = dailyGoal.progress,
+                reached = dailyGoal.reached,
+                modifier = Modifier.size(64.dp),
+            )
+        }
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize().padding(top = 12.dp),

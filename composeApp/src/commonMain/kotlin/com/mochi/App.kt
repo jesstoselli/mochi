@@ -103,6 +103,9 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     val stats by statsViewModel.stats.collectAsState()
     val learningWords by learningViewModel.words.collectAsState()
     val units by libraryViewModel.units.collectAsState()
+    val dailyGoalState = remember(stats.reviewsToday, dailyGoal) {
+        com.mochi.goal.toDailyGoalState(stats.reviewsToday.toInt(), dailyGoal)
+    }
     var tab by remember { mutableStateOf(Tab.REVIEW) }
 
     val darkTheme = when (themeMode) {
@@ -154,7 +157,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
                         label = "tabs",
                     ) { current ->
                         when (current) {
-                            Tab.REVIEW -> ReviewContent(reviewState, units, reviewViewModel)
+                            Tab.REVIEW -> ReviewContent(reviewState, units, dailyGoalState, reviewViewModel)
                             Tab.LEARNING -> LearningScreen(
                                 words = learningWords,
                                 onPlay = learningViewModel::play,
@@ -187,6 +190,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
 private fun ReviewContent(
     state: ReviewUiState,
     units: List<UnitSummary>,
+    dailyGoalState: com.mochi.goal.DailyGoalState,
     viewModel: ReviewViewModel,
 ) {
     val motionPolicy = LocalMotionPolicy.current
@@ -207,6 +211,7 @@ private fun ReviewContent(
 
                 ReviewUiState.Idle -> LibraryScreen(
                     units = units,
+                    dailyGoal = dailyGoalState,
                     onOpenUnit = viewModel::openUnit,
                     sharedScope = this@SharedTransitionLayout,
                     animatedScope = this@AnimatedContent,
@@ -217,6 +222,7 @@ private fun ReviewContent(
                     position = s.position,
                     total = s.total,
                     correctMilestone = s.correctMilestone,
+                    goalReached = s.goalReached,
                     sessionStreak = s.sessionStreak,
                     onAnswer = viewModel::answer,
                     onPlayAudio = viewModel::playCurrentAudio,

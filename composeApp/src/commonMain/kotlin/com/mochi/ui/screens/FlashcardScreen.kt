@@ -61,6 +61,7 @@ fun FlashcardScreen(
     position: Int,
     total: Int,
     correctMilestone: Int?,
+    goalReached: Boolean,
     sessionStreak: Int,
     onAnswer: (Boolean) -> Unit,
     onPlayAudio: () -> Unit,
@@ -186,8 +187,13 @@ fun FlashcardScreen(
                 AnswerButtons(onAnswer = onAnswer)
             }
         }
+        // Confetti stays tied to the correct-answer milestone; the mascot also cheers when the
+        // daily goal is reached.
+        val mascotReact = remember(correctMilestone, goalReached) {
+            if (correctMilestone != null || goalReached) Any() else null
+        }
         ConfettiBurst(trigger = correctMilestone, modifier = Modifier.fillMaxSize())
-        MochiMascot(greet = greetTrigger, react = correctMilestone, modifier = Modifier.fillMaxSize())
+        MochiMascot(greet = greetTrigger, react = mascotReact, modifier = Modifier.fillMaxSize())
     }
 }
 
