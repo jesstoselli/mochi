@@ -22,6 +22,9 @@ class SettingsViewModel(
     private val _newCardLimit = MutableStateFlow(store.newCardLimit())
     val newCardLimit: StateFlow<Int> = _newCardLimit.asStateFlow()
 
+    private val _dailyGoal = MutableStateFlow(store.dailyGoal())
+    val dailyGoal: StateFlow<Int> = _dailyGoal.asStateFlow()
+
     private val _reminderEnabled = MutableStateFlow(store.reminderEnabled())
     val reminderEnabled: StateFlow<Boolean> = _reminderEnabled.asStateFlow()
 
@@ -49,6 +52,11 @@ class SettingsViewModel(
     fun setNewCardLimit(limit: Int) {
         store.setNewCardLimit(limit)
         _newCardLimit.value = limit
+    }
+
+    fun setDailyGoal(goal: Int) {
+        store.setDailyGoal(goal)
+        _dailyGoal.value = goal
     }
 
     fun setReminderEnabled(enabled: Boolean) {

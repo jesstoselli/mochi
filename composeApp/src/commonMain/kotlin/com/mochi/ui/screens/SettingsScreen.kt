@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
@@ -61,11 +62,13 @@ import com.mochi.settings.ThemeMode
 import com.mochi.ui.components.MochiLogo
 
 private val NewCardOptions = listOf(10 to "10", 20 to "20", 30 to "30", 0 to "Unlimited")
+private val DailyGoalOptions = listOf(10, 20, 30, 50)
 
 private enum class SettingsDialog {
     THEME,
     MOTION,
     NEW_CARDS,
+    DAILY_GOAL,
 }
 
 private data class Choice<T>(
@@ -84,6 +87,8 @@ fun SettingsScreen(
     onMotionPreferenceChange: (MotionPreference) -> Unit,
     newCardLimit: Int,
     onNewCardLimitChange: (Int) -> Unit,
+    dailyGoal: Int,
+    onDailyGoalChange: (Int) -> Unit,
     reminderEnabled: Boolean,
     onReminderEnabledChange: (Boolean) -> Unit,
     reminderTime: ReminderTime,
@@ -143,6 +148,16 @@ fun SettingsScreen(
                 onClick = { openDialog = SettingsDialog.NEW_CARDS },
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PreferenceRow(
+                icon = Icons.Filled.Flag,
+                label = "Daily goal",
+                supportingText = "Reviews to aim for each day",
+                value = dailyGoal.toString(),
+                testTag = "daily-goal-setting",
+                iconBackground = MaterialTheme.colorScheme.tertiaryContainer,
+                onClick = { openDialog = SettingsDialog.DAILY_GOAL },
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             ReminderToggleRow(
                 enabled = reminderEnabled,
                 onChange = onReminderEnabledChange,
@@ -192,6 +207,16 @@ fun SettingsScreen(
                 Choice(value, label, testTag = "new-cards-option-$value")
             },
             onSelect = onNewCardLimitChange,
+            onDismiss = { openDialog = null },
+        )
+
+        SettingsDialog.DAILY_GOAL -> ChoiceDialog(
+            title = "Daily goal",
+            selected = dailyGoal,
+            choices = DailyGoalOptions.map { value ->
+                Choice(value, value.toString(), testTag = "daily-goal-option-$value")
+            },
+            onSelect = onDailyGoalChange,
             onDismiss = { openDialog = null },
         )
 

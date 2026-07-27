@@ -97,6 +97,7 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val motionPreference by settingsViewModel.motionPreference.collectAsState()
     val newCardLimit by settingsViewModel.newCardLimit.collectAsState()
+    val dailyGoal by settingsViewModel.dailyGoal.collectAsState()
     val reminderEnabled by settingsViewModel.reminderEnabled.collectAsState()
     val reminderTime by settingsViewModel.reminderTime.collectAsState()
     val stats by statsViewModel.stats.collectAsState()
@@ -166,6 +167,8 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
                                 onMotionPreferenceChange = settingsViewModel::setMotionPreference,
                                 newCardLimit = newCardLimit,
                                 onNewCardLimitChange = settingsViewModel::setNewCardLimit,
+                                dailyGoal = dailyGoal,
+                                onDailyGoalChange = settingsViewModel::setDailyGoal,
                                 reminderEnabled = reminderEnabled,
                                 onReminderEnabledChange = settingsViewModel::setReminderEnabled,
                                 reminderTime = reminderTime,
