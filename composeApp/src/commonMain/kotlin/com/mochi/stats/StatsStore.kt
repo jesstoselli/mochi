@@ -11,9 +11,9 @@ interface NewCardCounter {
 }
 
 /** Read-only access to review history for stats (streak, daily counts, totals). */
-class StatsStore(private val db: AppDatabase) : NewCardCounter {
+class StatsStore(private val db: AppDatabase) : NewCardCounter, com.mochi.review.ReviewCountSource {
 
-    fun reviewsOnDay(day: Long): Long = db.reviewLogQueries.countOnDay(day).executeAsOne()
+    override fun reviewsOnDay(day: Long): Long = db.reviewLogQueries.countOnDay(day).executeAsOne()
 
     override fun newOnDay(day: Long): Long = db.reviewLogQueries.countNewOnDay(day).executeAsOne()
 

@@ -86,7 +86,8 @@ fun App(driverFactory: DriverFactory, reminderScheduler: ReminderScheduler) {
     val learningStore = remember { LearningStore(db) }
     val libraryStore = remember { LibraryStore(db) }
 
-    val reviewViewModel = viewModel { ReviewViewModel(repo, statsStore, settingsStore, audioPlayer) }
+    val reviewViewModel =
+        viewModel { ReviewViewModel(repo, statsStore, settingsStore, statsStore, settingsStore, audioPlayer) }
     val settingsViewModel = viewModel { SettingsViewModel(settingsStore, reminderScheduler) }
     val statsViewModel = viewModel { StatsViewModel(statsStore) }
     val learningViewModel = viewModel { LearningViewModel(learningStore, audioPlayer) }

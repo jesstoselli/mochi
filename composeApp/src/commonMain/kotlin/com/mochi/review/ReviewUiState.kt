@@ -14,7 +14,9 @@ sealed interface ReviewUiState {
      * An active card. [sessionStreak] is the run of consecutive correct answers this session (the
      * 🔥 combo in the HUD); [correctMilestone] is non-null (e.g. 10, 20, …) only on the emission
      * where the session's cumulative correct-answer count just crossed a multiple of 10, so the UI
-     * fires the confetti + mascot cheer exactly once.
+     * fires the confetti + mascot cheer exactly once. [goalReached] is true only on the emission
+     * where today's global review count first crosses the configured daily goal, so the mascot
+     * cheers for the goal exactly once.
      */
     data class Reviewing(
         val card: Flashcard,
@@ -22,6 +24,7 @@ sealed interface ReviewUiState {
         val total: Int,
         val sessionStreak: Int,
         val correctMilestone: Int?,
+        val goalReached: Boolean = false,
     ) : ReviewUiState
 
     data class Complete(val stats: SessionStats) : ReviewUiState

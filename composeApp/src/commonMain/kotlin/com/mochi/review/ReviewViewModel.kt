@@ -6,6 +6,7 @@ import com.mochi.audio.AudioPlayer
 import com.mochi.data.ReviewDeck
 import com.mochi.db.Flashcard
 import com.mochi.resources.Res
+import com.mochi.settings.DailyGoalSource
 import com.mochi.settings.NewCardLimitSource
 import com.mochi.stats.NewCardCounter
 import com.mochi.ui.SessionStats
@@ -35,6 +36,8 @@ class ReviewViewModel(
     private val deck: ReviewDeck,
     private val newCardCounter: NewCardCounter,
     private val limitSource: NewCardLimitSource,
+    private val reviewCountSource: ReviewCountSource,
+    private val goalSource: DailyGoalSource,
     private val audioPlayer: AudioPlayer,
 ) : ViewModel() {
 
@@ -50,6 +53,7 @@ class ReviewViewModel(
     private var currentUnitId = 0
     private var sessionNewLimit = limitSource.newCardLimit()
     private var practiceMode = false
+    private var reviewsAtSessionStart = 0L
 
     /** The unit the current/most-recent session belongs to (drives the shared-element key). */
     var lastOpenedUnitId: Int = 0
@@ -95,6 +99,7 @@ class ReviewViewModel(
         reviewed = 0
         correct = 0
         sessionStreak = 0
+        reviewsAtSessionStart = reviewCountSource.reviewsOnDay(todayEpochDay())
         emitReviewing(milestone = null)
     }
 
@@ -107,6 +112,11 @@ class ReviewViewModel(
             deck.recordAnswer(card, isCorrect)
         }
         reviewed++
+        // One-shot when today's global review count first crosses the daily goal this session.
+        val goal = goalSource.dailyGoal()
+        val goalReached = goal > 0 &&
+            (reviewsAtSessionStart + reviewed - 1) < goal &&
+            (reviewsAtSessionStart + reviewed) >= goal
         var milestone: Int? = null
         if (isCorrect) {
             correct++
@@ -119,7 +129,7 @@ class ReviewViewModel(
         }
         if (index < session.lastIndex) {
             index++
-            emitReviewing(milestone)
+            emitReviewing(milestone, goalReached)
         } else {
             _state.value = ReviewUiState.Complete(SessionStats(reviewed = reviewed, correct = correct))
         }
@@ -160,13 +170,14 @@ class ReviewViewModel(
         return reviews + newCards.take(remainingNew)
     }
 
-    private fun emitReviewing(milestone: Int?) {
+    private fun emitReviewing(milestone: Int?, goalReached: Boolean = false) {
         _state.value = ReviewUiState.Reviewing(
             card = session[index],
             position = index + 1,
             total = session.size,
             sessionStreak = sessionStreak,
             correctMilestone = milestone,
+            goalReached = goalReached,
         )
     }
 

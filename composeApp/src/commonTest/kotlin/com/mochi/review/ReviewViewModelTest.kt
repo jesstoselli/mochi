@@ -3,6 +3,7 @@ package com.mochi.review
 import com.mochi.audio.AudioPlayer
 import com.mochi.data.ReviewDeck
 import com.mochi.db.Flashcard
+import com.mochi.settings.DailyGoalSource
 import com.mochi.settings.NewCardLimitSource
 import com.mochi.stats.NewCardCounter
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -142,7 +144,7 @@ class ReviewViewModelTest {
     fun changingTheLimitRebuildsTheRunningSession() {
         val limit = FakeLimit(1)
         val deck = FakeDeck(List(5) { card(it.toLong(), isNew = true) })
-        val vm = ReviewViewModel(deck, FakeCounter(0), limit, AudioPlayer())
+        val vm = ReviewViewModel(deck, FakeCounter(0), limit, FakeReviewCount(0), FakeGoal(0), AudioPlayer())
         vm.openUnit(0)
         assertEquals(1, (vm.state.value as ReviewUiState.Reviewing).total)
         limit.value = 3
@@ -150,8 +152,44 @@ class ReviewViewModelTest {
         assertEquals(3, (vm.state.value as ReviewUiState.Reviewing).total)
     }
 
-    private fun viewModel(deck: ReviewDeck, newToday: Long, limit: Int) =
-        ReviewViewModel(deck, FakeCounter(newToday), FakeLimit(limit), AudioPlayer())
+    @Test
+    fun goalReachedFiresOnceWhenReviewsCrossTheDailyGoal() {
+        val deck = FakeDeck(List(5) { card(it.toLong(), isNew = true) })
+        val vm = viewModel(deck, newToday = 0, limit = 10, reviewsToday = 0, goal = 3)
+        vm.openUnit(0)
+        vm.answer(isCorrect = true) // global 1
+        assertFalse((vm.state.value as ReviewUiState.Reviewing).goalReached)
+        vm.answer(isCorrect = true) // global 2
+        assertFalse((vm.state.value as ReviewUiState.Reviewing).goalReached)
+        vm.answer(isCorrect = true) // global 3 -> crosses the goal
+        assertTrue((vm.state.value as ReviewUiState.Reviewing).goalReached)
+        vm.answer(isCorrect = true) // global 4 -> no refire
+        assertFalse((vm.state.value as ReviewUiState.Reviewing).goalReached)
+    }
+
+    @Test
+    fun goalReachedDoesNotFireWhenGoalAlreadyMetBeforeTheSession() {
+        val deck = FakeDeck(List(5) { card(it.toLong(), isNew = true) })
+        val vm = viewModel(deck, newToday = 0, limit = 10, reviewsToday = 3, goal = 3)
+        vm.openUnit(0)
+        vm.answer(isCorrect = true) // global already 4
+        assertFalse((vm.state.value as ReviewUiState.Reviewing).goalReached)
+    }
+
+    private fun viewModel(
+        deck: ReviewDeck,
+        newToday: Long,
+        limit: Int,
+        reviewsToday: Long = 0,
+        goal: Int = 0,
+    ) = ReviewViewModel(
+        deck,
+        FakeCounter(newToday),
+        FakeLimit(limit),
+        FakeReviewCount(reviewsToday),
+        FakeGoal(goal),
+        AudioPlayer(),
+    )
 }
 
 private fun card(id: Long, isNew: Boolean, nextReview: Long? = null) = Flashcard(
@@ -196,4 +234,12 @@ private class FakeCounter(private val newToday: Long) : NewCardCounter {
 
 private class FakeLimit(var value: Int) : NewCardLimitSource {
     override fun newCardLimit(): Int = value
+}
+
+private class FakeReviewCount(private val count: Long) : ReviewCountSource {
+    override fun reviewsOnDay(day: Long): Long = count
+}
+
+private class FakeGoal(private val goal: Int) : DailyGoalSource {
+    override fun dailyGoal(): Int = goal
 }
