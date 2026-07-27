@@ -1,13 +1,18 @@
 package com.mochi.audio
 
 /**
- * iOS audio playback is not wired yet. Building NSData from a ByteArray via the
- * Kotlin/Native Foundation interop (NSData.create) didn't resolve in this toolchain, so
- * this is a no-op for now — the shared review flow stays cross-platform and Android plays
- * pronunciation normally. Revisit on-device (e.g. load the bundled file via Res.getUri +
- * AVAudioPlayer(contentsOf:), or a small KMP audio library).
+ * iOS playback delegates to a single [IosAudioController] backed by AVFoundation. The instance is
+ * retained for the player's lifetime so rapid autoplay or Listen taps replace the current clip
+ * rather than overlapping it.
  */
 actual class AudioPlayer {
-    actual fun play(bytes: ByteArray) = Unit
-    actual fun release() = Unit
+    private val controller = IosAudioController(AvFoundationAudioBackend())
+
+    actual fun play(bytes: ByteArray) {
+        controller.play(bytes)
+    }
+
+    actual fun release() {
+        controller.release()
+    }
 }
