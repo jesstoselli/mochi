@@ -27,9 +27,11 @@ assistant.
 - Pronunciation playback with `AVAudioPlayer` — **Implemented** (in-memory `NSData` over the
   `ambient` audio session, replace-not-overlap). The full iOS app builds and the controller logic is
   covered by simulator unit tests; a runtime simulator smoke-test is still pending.
-- Load the bundled Mochi UI and Japanese fonts on iOS — pending (next item).
-- Validate audio (Ring/Silent, routing, cross-app mixing), typography, reminders, and shared UI on a
-  real iOS device — pending.
+- Load the bundled Mochi UI and Japanese fonts on iOS — **Implemented** (single commonMain
+  `rememberMochiFonts` over the shared `Res.font` accessors; both platform font loaders removed).
+- Validate audio, typography, reminders, and shared UI — do a runtime **simulator** smoke-test
+  (pending `xcode-select`). No physical iOS device is available, so real-device-only behaviors
+  (Ring/Silent, audio routing, cross-app mixing, reminder firing) stay on their API contracts.
 
 ## 3. Daily goal and progress ring
 
