@@ -48,7 +48,8 @@ fun DailyGoalRing(
     val track = MaterialTheme.colorScheme.surfaceVariant
     val fill = ring.copy(alpha = 0.35f)
     val phase = if (policy.allowInfiniteMotion) rememberWavePhase() else 0f
-    val amplitude = if (policy.allowInfiniteMotion) WAVE_AMPLITUDE else 0f
+    // No wave once the goal is reached, so the completed ring reads as fully flooded.
+    val amplitude = if (policy.allowInfiniteMotion && !reached) WAVE_AMPLITUDE else 0f
 
     Box(modifier, contentAlignment = Alignment.Center) {
         Canvas(Modifier.matchParentSize()) {

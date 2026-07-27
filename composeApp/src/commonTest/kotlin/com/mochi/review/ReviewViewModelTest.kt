@@ -176,6 +176,17 @@ class ReviewViewModelTest {
         assertFalse((vm.state.value as ReviewUiState.Reviewing).goalReached)
     }
 
+    @Test
+    fun goalReachedNeverFiresInPracticeMode() {
+        // A fully-learned, not-due unit falls back to practice; practice answers are excluded from
+        // the daily count, so the crossing must not fire even when reviewed would otherwise reach it.
+        val cards = List(3) { card(it.toLong(), isNew = false, nextReview = Long.MAX_VALUE) }
+        val vm = viewModel(FakeDeck(cards), newToday = 0, limit = 0, reviewsToday = 1, goal = 2)
+        vm.openUnit(0)
+        vm.answer(isCorrect = true) // practice: start(1)+1 would cross goal 2, but must not fire
+        assertFalse((vm.state.value as ReviewUiState.Reviewing).goalReached)
+    }
+
     private fun viewModel(
         deck: ReviewDeck,
         newToday: Long,

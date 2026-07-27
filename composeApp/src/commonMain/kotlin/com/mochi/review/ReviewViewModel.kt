@@ -113,8 +113,11 @@ class ReviewViewModel(
         }
         reviewed++
         // One-shot when today's global review count first crosses the daily goal this session.
+        // Practice answers are logged with practice=1 and excluded from the daily count, so they
+        // must not advance the crossing (otherwise the mascot cheers while the ring never fills).
         val goal = goalSource.dailyGoal()
-        val goalReached = goal > 0 &&
+        val goalReached = !practiceMode &&
+            goal > 0 &&
             (reviewsAtSessionStart + reviewed - 1) < goal &&
             (reviewsAtSessionStart + reviewed) >= goal
         var milestone: Int? = null
