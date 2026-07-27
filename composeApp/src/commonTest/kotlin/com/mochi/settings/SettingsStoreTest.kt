@@ -41,6 +41,27 @@ class SettingsStoreTest {
 
         assertEquals("REDUCED", values.entries["motion_preference"])
     }
+
+    @Test
+    fun dailyGoalDefaultsTo20() {
+        assertEquals(20, SettingsStore(FakeSettingValues()).dailyGoal())
+    }
+
+    @Test
+    fun dailyGoalRoundTrips() {
+        val store = SettingsStore(FakeSettingValues())
+
+        store.setDailyGoal(30)
+
+        assertEquals(30, store.dailyGoal())
+    }
+
+    @Test
+    fun dailyGoalFallsBackOnGarbage() {
+        val store = SettingsStore(FakeSettingValues(mutableMapOf("daily_goal" to "not-a-number")))
+
+        assertEquals(20, store.dailyGoal())
+    }
 }
 
 private class ThrowingSettingValues : SettingValues {

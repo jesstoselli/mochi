@@ -8,6 +8,11 @@ interface NewCardLimitSource {
     fun newCardLimit(): Int
 }
 
+/** Just the daily review goal the ring and review flow need (lets callers use a fake). */
+interface DailyGoalSource {
+    fun dailyGoal(): Int
+}
+
 internal interface SettingValues {
     fun read(key: String): String?
 
@@ -26,7 +31,7 @@ private class DatabaseSettingValues(private val db: AppDatabase) : SettingValues
 /** Reads/writes app preferences from the app_setting key/value table. */
 class SettingsStore internal constructor(
     private val values: SettingValues,
-) : NewCardLimitSource {
+) : NewCardLimitSource, DailyGoalSource {
 
     constructor(db: AppDatabase) : this(DatabaseSettingValues(db))
 
@@ -57,6 +62,16 @@ class SettingsStore internal constructor(
         values.write(KEY_NEW_LIMIT, limit.toString())
     }
 
+    /** Reviews targeted per day for the daily-goal ring. */
+    override fun dailyGoal(): Int {
+        val stored = values.read(KEY_DAILY_GOAL)
+        return stored?.toIntOrNull() ?: DEFAULT_DAILY_GOAL
+    }
+
+    fun setDailyGoal(goal: Int) {
+        values.write(KEY_DAILY_GOAL, goal.toString())
+    }
+
     fun reminderEnabled(): Boolean =
         values.read(KEY_REMINDER_ENABLED) == "1"
 
@@ -84,7 +99,9 @@ class SettingsStore internal constructor(
         const val KEY_NEW_LIMIT = "new_card_limit"
         const val KEY_REMINDER_ENABLED = "reminder_enabled"
         const val KEY_REMINDER_TIME = "reminder_time"
+        const val KEY_DAILY_GOAL = "daily_goal"
         const val DEFAULT_NEW_LIMIT = 20
+        const val DEFAULT_DAILY_GOAL = 20
         const val DEFAULT_REMINDER_HOUR = 20
     }
 }
