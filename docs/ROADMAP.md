@@ -34,11 +34,16 @@ assistant.
   fonts, navigation). No physical iOS device is available, so real-device-only behaviors
   (Ring/Silent, audio routing, cross-app mixing, reminder firing) stay on their API contracts.
 
-## 3. Daily goal and progress ring
+## 3. Daily goal and progress ring — Complete
 
-- Add a configurable daily review goal.
-- Show today's global review progress with a liquid ring and animated count.
-- Add a completed state and a reduced-motion presentation.
+- Configurable daily review goal in Settings (10/20/30/50, default 20, always on).
+- Library-header liquid ring shows today's global review progress with an animated count, filling
+  reactively as reviews are logged; completed (✓) state once the goal is met.
+- The Mochi mascot cheers in-the-moment on the study screen when a review crosses the goal
+  (one-shot `goalReached` from the review flow, reusing the existing mascot).
+- Reduced-motion presentation (static fill, no wave) via `MotionPolicy`.
+- Verified on the iOS 17 simulator: ring renders and fills, the Settings goal change updates it
+  reactively (8/20 → 8/10), and reviews cross the goal (reviews-today reached 10/10).
 
 ## 4. Unit completion celebration
 

@@ -109,6 +109,14 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   answers, resets on a miss (the 🔥 combo in the HUD). Separately, `correctMilestone` is set on the
   one `Reviewing` emission where the **cumulative** correct count crosses a multiple of 10
   (a miss does NOT reset it) → drives the confetti + mascot cheer.
+- **Daily goal** (`dailyGoal` setting, 10/20/30/50, default 20): counts **reviews today**
+  (`StatsStore.reviewsOnDay`). The Library header shows a `DailyGoalRing` (circular liquid gauge +
+  `AnimatedCounter`) built from the pure `com.mochi.goal.toDailyGoalState(reviewsToday, goal)`,
+  reusing the reactive `StatsViewModel.reviewsToday` + `SettingsViewModel.dailyGoal` (no dedicated
+  ViewModel). Separately, `ReviewViewModel` sets a one-shot `goalReached` on the emission where the
+  day's global review count first crosses the goal (`< goal → >= goal`, once per day) → the
+  study-screen mascot cheers. If the crossing lands on the session's last card, the session-complete
+  celebration covers it instead.
 - **Units are derived, not stored.** Unit N = the cards ranked `[N*50, N*50+50)` by frequency.
   `learnedCount` = cards with `next_review != null` (matches the "words learned" stat);
   `dueCount` = cards with `next_review <= now` (new cards aren't counted as due but are still offered).
