@@ -32,9 +32,13 @@ class IosAudioControllerTest {
 
     @Test
     fun backendFailureDoesNotEscape() {
-        val controller = IosAudioController(RecordingAudioBackend(failOnReplace = true))
+        val backend = RecordingAudioBackend(failOnReplace = true)
+        val controller = IosAudioController(backend)
 
+        // A throwing backend must be swallowed: no exception, and nothing recorded.
         controller.play(byteArrayOf(1))
+
+        assertEquals(0, backend.replacements.size)
     }
 
     @Test

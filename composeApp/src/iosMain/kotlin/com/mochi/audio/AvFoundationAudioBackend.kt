@@ -20,14 +20,22 @@ import platform.darwin.NSObject
  * keeps the current player strongly referenced until it is replaced, finishes, fails to decode, or
  * is released. Obj-C delegate callbacks are handled by a separate [PlaybackDelegate] because
  * Kotlin/Native forbids mixing a Kotlin supertype ([IosAudioBackend]) with Obj-C supertypes.
+ *
+ * Must be driven from the main thread: `player` is mutated without synchronization, and callers
+ * (ViewModel/Compose scopes) plus AVFoundation's delegate callbacks are all main-thread confined.
  */
 @OptIn(ExperimentalForeignApi::class)
 internal class AvFoundationAudioBackend : IosAudioBackend {
     private val session = AVAudioSession.sharedInstance()
+
+    // backend -> delegate -> lambda -> backend is a reference cycle. Kotlin/Native's tracing GC
+    // collects the island once it is unreferenced, and this instance is app-lifetime anyway, so the
+    // cycle is intentional and does not leak.
     private val delegate = PlaybackDelegate { finished -> onPlaybackEnded(finished) }
     private var player: AVAudioPlayer? = null
 
     override fun replace(bytes: ByteArray) {
+        if (bytes.isEmpty()) return
         stopCurrentPlayer()
 
         runCatching {
@@ -50,7 +58,10 @@ internal class AvFoundationAudioBackend : IosAudioBackend {
     }
 
     private fun onPlaybackEnded(finished: AVAudioPlayer) {
-        if (player === finished) clearPlayerAndDeactivate()
+        // Runs from an AVFoundation delegate callback; keep failures from escaping into Obj-C.
+        runCatching {
+            if (player === finished) clearPlayerAndDeactivate()
+        }
     }
 
     private fun stopCurrentPlayer() {
