@@ -4,6 +4,14 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.mochi.resources.Res
+import com.mochi.resources.nunito_bold
+import com.mochi.resources.nunito_medium
+import com.mochi.resources.nunito_regular
+import com.mochi.resources.zen_maru_gothic_medium
+import com.mochi.resources.zen_maru_gothic_regular
+import org.jetbrains.compose.resources.Font
 
 /** Provides the Japanese font to composables that render kana/kanji (e.g. the card). */
 val LocalJapaneseFont = staticCompositionLocalOf<FontFamily> { FontFamily.Default }
@@ -12,11 +20,22 @@ val LocalJapaneseFont = staticCompositionLocalOf<FontFamily> { FontFamily.Defaul
 data class MochiFonts(val ui: FontFamily, val japanese: FontFamily)
 
 /**
- * Loads the app fonts. Platform-specific: Android bundles Nunito + Zen Maru Gothic;
- * iOS falls back to the system fonts (which already render Japanese well).
+ * Loads the bundled Mochi fonts (Nunito for UI, Zen Maru Gothic for Japanese) straight from the
+ * multiplatform `Res.font` accessors, so Android and iOS share one implementation with no
+ * platform-specific font loading.
  */
 @Composable
-expect fun rememberMochiFonts(): MochiFonts
+fun rememberMochiFonts(): MochiFonts = MochiFonts(
+    ui = FontFamily(
+        Font(Res.font.nunito_regular, FontWeight.Normal),
+        Font(Res.font.nunito_medium, FontWeight.Medium),
+        Font(Res.font.nunito_bold, FontWeight.Bold),
+    ),
+    japanese = FontFamily(
+        Font(Res.font.zen_maru_gothic_regular, FontWeight.Normal),
+        Font(Res.font.zen_maru_gothic_medium, FontWeight.Medium),
+    ),
+)
 
 /** Material typography with the UI font applied across every style. */
 fun mochiTypography(ui: FontFamily): Typography {
