@@ -51,9 +51,10 @@ polished interaction, reusable motion primitives and production-minded KMP archi
 - **Live statistics** — current daily streak, reviews today, words learned and a seven-day chart
   update reactively from SQLDelight flows.
 - **Audio and reminders** — pronunciation playback on Android and iOS, and configurable daily
-  study reminders on Android and iOS. iOS audio builds and passes the simulator unit tests; its
-  Ring/Silent and routing behavior (and the iOS reminder firing) are device-only and rest on the
-  platform API contracts, as no physical iOS device is available for testing.
+  study reminders on Android and iOS. iOS audio is verified on the iOS simulator (session
+  activation, rapid-tap replacement, release — all crash-free); its Ring/Silent and routing
+  behavior (and the iOS reminder firing) are device-only and rest on the platform API contracts, as
+  no physical iOS device is available for testing.
 - **Mochi Box theme** — System, Light and Dark modes, themed system bars, haptics, and bundled
   Nunito + Zen Maru Gothic fonts on Android and iOS, with a theme-aware Android 12+ splash screen.
 - **Motion accessibility** — choose Full, System or Reduced motion in the redesigned Settings

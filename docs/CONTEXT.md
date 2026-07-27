@@ -123,8 +123,10 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   replaces the current one. `setActive`/`NSData.create` are Kotlin/Native category extensions and
   need explicit imports; a separate `NSObject` `PlaybackDelegate` carries the completion callbacks
   (K/N forbids mixing Kotlin and Obj-C supertypes). Verified so far: iOS compiles and links, the
-  full iOS app builds, and the controller logic is covered by simulator unit tests. Still pending: a
-  runtime playback smoke-test (the simulator launch needs `xcode-select` pointed at Xcode).
+  full iOS app builds, and the controller logic is covered by simulator unit tests. Runtime
+  smoke-test on the iOS 17 simulator passed: autoplay, Listen (incl. rapid taps that replace without
+  overlap), card-advance re-trigger, and screen-exit release all ran without crashing, and the
+  system log showed the `AVAudioSession` activating and a client player being created each time.
   Ring/Silent, audio routing, and cross-app mixing are device-only behaviors and unverifiable here
   (no physical device); they rest on the `ambient` session's API contract.
 - **Fonts** (`rememberMochiFonts`, single commonMain impl): the bundled Nunito (UI) and Zen Maru
@@ -200,9 +202,9 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   with the auto-played pronunciation at session start); revisit if a sound is wanted.
 - **iOS**: common code compiles for iOS; animations are Compose-common so they render on both.
   **iOS audio is implemented** (NSData/AVAudioPlayer) and **iOS bundled fonts are implemented**
-  (shared `Res.font`) — the iOS app builds and simulator unit tests pass. Runtime simulator
-  smoke-test still pending (the launch needs
-  `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`).
+  (shared `Res.font`) — the iOS app builds, simulator unit tests pass, and a runtime smoke-test on
+  the iOS 17 simulator confirmed audio (session activation, replace-not-overlap, release) and font
+  rendering (Nunito + Zen Maru) with no crash.
 - **No physical iOS device available**, so the simulator is the verification ceiling. Device-only
   behaviors — audio Ring/Silent switch, speaker/headphone routing, cross-app mixing, and the
   UserNotifications reminder firing — cannot be validated here; they rest on the AVFoundation /
