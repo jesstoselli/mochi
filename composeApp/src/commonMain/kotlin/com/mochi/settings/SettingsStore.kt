@@ -28,7 +28,11 @@ private class DatabaseSettingValues(private val db: AppDatabase) : SettingValues
     }
 }
 
-/** Reads/writes app preferences from the app_setting key/value table. */
+/**
+ * Reads/writes app preferences from the app_setting key/value table. Each setting is a
+ * getter+setter pair, so the function count grows with the number of preferences by design.
+ */
+@Suppress("TooManyFunctions")
 class SettingsStore internal constructor(
     private val values: SettingValues,
 ) : NewCardLimitSource, DailyGoalSource {
