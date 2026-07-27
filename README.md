@@ -50,9 +50,10 @@ polished interaction, reusable motion primitives and production-minded KMP archi
   tab and disappear after a correct answer. Tapping a word plays its pronunciation.
 - **Live statistics** — current daily streak, reviews today, words learned and a seven-day chart
   update reactively from SQLDelight flows.
-- **Audio and reminders** — pronunciation playback on Android and configurable daily study
-  reminders on Android and iOS. iOS pronunciation audio is pending, and reminders still await
-  real-device validation on iOS.
+- **Audio and reminders** — pronunciation playback on Android and iOS, and configurable daily
+  study reminders on Android and iOS. iOS audio builds and passes the simulator unit tests; a
+  runtime smoke-test, its Ring/Silent and routing behavior, and the iOS reminders still await
+  device validation.
 - **Mochi Box theme** — System, Light and Dark modes, themed system bars, haptics, bundled fonts
   on Android and a theme-aware Android 12+ splash screen.
 - **Motion accessibility** — choose Full, System or Reduced motion in the redesigned Settings

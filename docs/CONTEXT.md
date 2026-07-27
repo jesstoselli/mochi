@@ -116,7 +116,16 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
 ## Platform specifics
 
 - **Audio** (`AudioPlayer` expect/actual): Android uses `MediaPlayer` with an in-memory data
-  source; **iOS is a no-op** (Foundation `NSData`-from-bytes interop was deferred).
+  source; **iOS plays through AVFoundation** — a small `IosAudioController` (tested with a fake
+  backend) filters empty bytes and contains failures, while `AvFoundationAudioBackend` copies the
+  bytes into `NSData` (`NSData.create(bytes,length)`), configures the `ambient` `AVAudioSession`
+  (respects Ring/Silent, mixes with other apps), and plays via `AVAudioPlayer`. A new clip stops and
+  replaces the current one. `setActive`/`NSData.create` are Kotlin/Native category extensions and
+  need explicit imports; a separate `NSObject` `PlaybackDelegate` carries the completion callbacks
+  (K/N forbids mixing Kotlin and Obj-C supertypes). Verified so far: iOS compiles and links, the
+  full iOS app builds, and the controller logic is covered by simulator unit tests. Still pending: a
+  runtime playback smoke-test (the simulator launch needs `xcode-select` pointed at Xcode) and, on a
+  physical device, Ring/Silent, audio routing, and cross-app mixing.
 - **Fonts** (`rememberMochiFonts` expect/actual): Android loads bundled Nunito + Zen Maru Gothic
   from bytes; **iOS uses system fonts** (still renders Japanese fine).
 - **Reminder** (`ReminderScheduler` expect-like, one impl per platform):
@@ -187,8 +196,11 @@ Source sets: `commonMain` (UI + data + VMs), `androidMain` / `iosMain` for `expe
   streaks (see above). The greeting is haptic + visual only (no "pop" sound, to avoid clashing
   with the auto-played pronunciation at session start); revisit if a sound is wanted.
 - **iOS**: common code compiles for iOS; animations are Compose-common so they render on both.
-  Still deferred: **iOS audio** (NSData/AVAudioPlayer) and **iOS bundled fonts** (uses system fonts).
-  Reminder (UserNotifications) still to confirm on a real device.
+  **iOS audio is now implemented** (NSData/AVAudioPlayer): iOS app builds and simulator unit tests
+  pass. Runtime simulator smoke-test pending (the launch needs
+  `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`). Still deferred: **iOS bundled
+  fonts** (uses system fonts — the next parity item). Reminder (UserNotifications) and the audio
+  Ring/Silent + routing behavior still to confirm on a real device.
 - **README media**: keep exactly two slots — the Library and the study flow. Replace their files in
   `docs/screenshots/` when final captures are ready.
 - Possible niceties: shuffle the re-entry position of a missed last card; a "Still learning (N)"

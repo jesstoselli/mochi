@@ -24,9 +24,12 @@ assistant.
 
 ## 2. iOS platform parity
 
-- Implement pronunciation playback with `AVAudioPlayer`.
-- Load the bundled Mochi UI and Japanese fonts on iOS.
-- Validate audio, typography, reminders, and shared UI on a real iOS device.
+- Pronunciation playback with `AVAudioPlayer` — **Implemented** (in-memory `NSData` over the
+  `ambient` audio session, replace-not-overlap). The full iOS app builds and the controller logic is
+  covered by simulator unit tests; a runtime simulator smoke-test is still pending.
+- Load the bundled Mochi UI and Japanese fonts on iOS — pending (next item).
+- Validate audio (Ring/Silent, routing, cross-app mixing), typography, reminders, and shared UI on a
+  real iOS device — pending.
 
 ## 3. Daily goal and progress ring
 
