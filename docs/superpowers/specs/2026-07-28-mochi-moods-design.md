@@ -16,17 +16,20 @@ identical in shape to the existing `goalReached`.
 
 ## 1. Expressions (the moods)
 
-Five distinct faces, each drawn as vector-path variants inside `MochiLogo` on the existing
+Six distinct faces, each drawn as vector-path variants inside `MochiLogo` on the existing
 `0..64` viewBox. All share the current body, cheeks, belly, and stroke — only eyes, mouth, and
 small extras change. A new `MochiMood` parameter selects the face.
 
 | Mood          | Face                                                            |
 |---------------|----------------------------------------------------------------|
+| `NotHappy`    | flat `-_-` dash eyes + straight neutral mouth (unimpressed)    |
 | `Content`     | open eyes + small resting smile (the current face)             |
 | `Happy`       | open eyes + wider smile, cheeks more present                   |
 | `Radiant`     | big smile + sparkle/star eyes ✨                                |
 | `Encouraging` | soft upward `^^` eyes + tiny sweat drop + gentle small mouth   |
 | `Celebrating` | closed happy-arc eyes + open joyful mouth                      |
+
+`NotHappy` is a **baseline-only** mood (lowest unit-fill level). Reactions never use it.
 
 Face swaps are **static** (rendering a different set of paths), so they are always shown, including
 under reduced motion. The spring pop-up and entry bounce remain gated by `MotionPolicy` exactly as
@@ -35,21 +38,22 @@ today — moods add no new motion.
 ## 2. Baseline mood — progressively happier as the unit fills
 
 The mascot's resting/greet face scales with the current unit's fill ratio
-(`learnedCount / totalCount` of `currentUnitId`), via a pure function:
+(`learnedCount / totalCount` of `currentUnitId`) across four quartile levels, via a pure function:
 
 ```
 moodForUnitRatio(ratio: Float): MochiMood
-  ratio >= 0.67f -> Radiant
-  ratio >= 0.34f -> Happy
-  else           -> Content
+  ratio <= 0.25f -> NotHappy   // 0–25%
+  ratio <= 0.50f -> Content    // 26–50%
+  ratio <= 0.75f -> Happy      // 51–75%
+  else           -> Radiant    // 76–100%
 
 moodForUnitProgress(learned: Int, total: Int): MochiMood =
   moodForUnitRatio(if (total <= 0) 0f else learned.toFloat() / total)
 ```
 
-`total <= 0` yields `Content` (defensive; never expected in a real session). `FlashcardScreen`
-uses `moodForUnitRatio` directly (it already has the ratio); the ViewModel/tests use the
-count-based `moodForUnitProgress`.
+`total <= 0` yields `NotHappy` (ratio 0; a barely-started unit reads as unimpressed — matches
+intent). `FlashcardScreen` uses `moodForUnitRatio` directly (it already has the ratio); the
+ViewModel/tests use the count-based `moodForUnitProgress`.
 
 ## 3. Reactions (transient pops) + priority
 
@@ -163,10 +167,11 @@ On a GREET event it renders `restMood`; on a REACT event it renders `reactMood`.
 ## 6. Testing
 
 **Pure functions (`MochiMoodTest`):**
-- `moodForUnitProgress` boundaries: `0/50 → Content`, `16/50` (32%) → `Content`,
-  `17/50` (34%) → `Happy`, `33/50` (66%) → `Happy`, `34/50` (68%) → `Radiant`,
-  `50/50 → Radiant`, `total = 0 → Content`.
-- `moodForUnitRatio` agrees with the count-based version at the same ratios.
+- `moodForUnitProgress` boundaries: `0/50 → NotHappy`, `12/50` (24%) → `NotHappy`,
+  `13/50` (26%) → `Content`, `25/50` (50%) → `Content`, `26/50` (52%) → `Happy`,
+  `37/50` (74%) → `Happy`, `38/50` (76%) → `Radiant`, `50/50 → Radiant`, `total = 0 → NotHappy`.
+- `moodForUnitRatio` boundaries: `0.25 → NotHappy`, `0.50 → Content`, `0.75 → Happy`,
+  `0.76 → Radiant`; agrees with the count-based version at the same ratios.
 - `resolveReaction` permutations: all-true → `Radiant`; `goal + milestone` → `Celebrating`;
   `milestone` only → `Celebrating`; `wrong` only → `Encouraging`; `wrong + goal` → `Celebrating`;
   `wrong + unitCompleted` → `Radiant`; none → `null`.
